@@ -11,8 +11,10 @@ import {
   Checkbox,
   RowActions,
 } from "@/components/ui";
+
 import CreateItemModal from "@/components/catalog/create-item-modal";
 import { deleteItem } from "@/app/actions/delete-item";
+import { updateItem } from "@/app/actions/update-item";
 
 type Item = {
   id: number;
@@ -22,36 +24,21 @@ type Item = {
   price: number;
 };
 
-export default function CatalogClient({
-  initialData,
-}: {
-  initialData: Item[];
-}) {
+export default function CatalogClient({ initialData }: { initialData: Item[] }) {
   const [items, setItems] = useState(initialData);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [isPending, startTransition] = useTransition();
-
-  function handleDelete(id: number) {
-    startTransition(async () => {
-      await deleteItem(id);
-      setItems((prev) => prev.filter((item) => item.id !== id));
-    });
-  }
 
   return (
     <div className="p-10 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Catálogo</h1>
-        <CreateItemModal
-          item={editingItem}
-          onClose={() => setEditingItem(null)}
-        />
+        <CreateItemModal />
       </div>
 
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead />
             <TableHead>Concepto</TableHead>
             <TableHead>Categoría</TableHead>
             <TableHead>Unidad</TableHead>
@@ -63,9 +50,6 @@ export default function CatalogClient({
         <TableBody>
           {items.map((item) => (
             <TableRow key={item.id}>
-              <TableCell>
-                <Checkbox />
-              </TableCell>
               <TableCell>{item.name}</TableCell>
               <TableCell>{item.category}</TableCell>
               <TableCell>{item.unit}</TableCell>
@@ -75,7 +59,14 @@ export default function CatalogClient({
               <TableCell className="text-right">
                 <RowActions
                   onEdit={() => setEditingItem(item)}
-                  onDelete={() => handleDelete(item.id)}
+                  onDelete={() =>
+                    startTransition(async () => {
+                      await deleteItem(item.id);
+                      setItems((prev) =>
+                        prev.filter((i) => i.id !== item.id)
+                      );
+                    })
+                  }
                 />
               </TableCell>
             </TableRow>
