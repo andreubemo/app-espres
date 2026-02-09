@@ -1,5 +1,3 @@
-"use server";
-
 import { prisma } from "@/lib/prisma";
 
 export async function getItems() {
@@ -7,13 +5,13 @@ export async function getItems() {
     orderBy: { id: "asc" },
   });
 
-  // 🔥 NORMALIZACIÓN PARA CLIENT COMPONENTS
+  // 🔥 CONVERSIÓN A OBJETOS PLANOS
   return items.map((item) => ({
     id: item.id,
     name: item.name,
     category: item.category,
     unit: item.unit,
-    price: Number(item.price), // Decimal → number
+    price: Number(item.price), // ← CLAVE
     createdAt: item.createdAt.toISOString(),
     updatedAt: item.updatedAt.toISOString(),
   }));

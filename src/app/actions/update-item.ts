@@ -2,19 +2,25 @@
 
 import { prisma } from "@/lib/prisma";
 
-type UpdateItemInput = {
-  id: number;
-  name: string;
-  category: string;
-  unit: string;
-  price: number;
-};
+export async function updateItem(id: number, formData: FormData) {
+  const name = String(formData.get("name"));
+  const category = String(formData.get("category"));
+  const unit = String(formData.get("unit"));
+  const price = Number(formData.get("price"));
 
-export async function updateItem(data: UpdateItemInput) {
-  const { id, ...rest } = data;
+  if (!name || !category || !unit || isNaN(price)) {
+    throw new Error("Datos inválidos");
+  }
 
-  await prisma.item.update({
+  const updated = await prisma.item.update({
     where: { id },
-    data: rest,
+    data: {
+      name,
+      category,
+      unit,
+      price,
+    },
   });
+
+  return updated;
 }
