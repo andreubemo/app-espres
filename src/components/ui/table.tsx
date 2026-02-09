@@ -1,89 +1,51 @@
-import { cn } from "@/lib/utils";
-import * as React from "react";
+import { ReactNode } from "react";
 
-/* =========================
-   Tabla base
-   ========================= */
-
-export function Table({
-  className,
-  ...props
-}: React.TableHTMLAttributes<HTMLTableElement>) {
+export function Table({ children }: { children: ReactNode }) {
   return (
-    <div className="w-full overflow-x-auto rounded-lg border border-[var(--color-border)]">
-      <table
-        className={cn(
-          "w-full border-collapse text-sm",
-          className
-        )}
-        {...props}
-      />
+    <div className="relative overflow-visible">
+      <table className="w-full border-collapse">
+        {children}
+      </table>
     </div>
   );
 }
 
-/* =========================
-   Subcomponentes
-   ========================= */
-
-export function TableHeader(
-  props: React.HTMLAttributes<HTMLTableSectionElement>
-) {
-  return (
-    <thead
-      className="bg-[var(--color-surface)] text-left text-xs font-semibold uppercase tracking-wide"
-      {...props}
-    />
-  );
+export function TableHeader({ children }: { children: ReactNode }) {
+  return <thead className="border-b">{children}</thead>;
 }
 
-export function TableBody(
-  props: React.HTMLAttributes<HTMLTableSectionElement>
-) {
-  return <tbody {...props} />;
+export function TableBody({ children }: { children: ReactNode }) {
+  return <tbody className="overflow-visible">{children}</tbody>;
 }
 
-export function TableRow({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLTableRowElement>) {
-  return (
-    <tr
-      className={cn(
-        "border-b border-[var(--color-border)] last:border-0 hover:bg-gray-50",
-        className
-      )}
-      {...props}
-    />
-  );
+export function TableRow({ children }: { children: ReactNode }) {
+  return <tr className="border-b last:border-0">{children}</tr>;
 }
 
 export function TableHead({
-  className,
-  ...props
-}: React.ThHTMLAttributes<HTMLTableCellElement>) {
+  children,
+  className = "",
+}: {
+  children?: ReactNode;
+  className?: string;
+}) {
   return (
-    <th
-      className={cn(
-        "px-4 py-3 text-[var(--color-muted)]",
-        className
-      )}
-      {...props}
-    />
+    <th className={`px-3 py-2 text-left text-sm font-medium text-gray-500 ${className}`}>
+      {children}
+    </th>
   );
 }
 
 export function TableCell({
-  className,
-  ...props
-}: React.TdHTMLAttributes<HTMLTableCellElement>) {
+  children,
+  className = "",
+}: {
+  children?: ReactNode;
+  className?: string;
+}) {
   return (
-    <td
-      className={cn(
-        "px-4 py-3 align-middle",
-        className
-      )}
-      {...props}
-    />
+    <td className={`px-3 py-2 text-sm align-middle ${className}`}>
+      {children}
+    </td>
   );
 }

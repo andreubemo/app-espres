@@ -5,3 +5,8 @@ export * from "./badge";
 export * from "./table";
 export * from "./row-actions";
 export * from "./checkbox";
+export * from "./search-bar";
+export * from "./select";
+export * from "./pagination";
+export * from "./modal";
+export * from "./table";
