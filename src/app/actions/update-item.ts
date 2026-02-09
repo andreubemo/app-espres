@@ -1,27 +1,20 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
 
-export async function updateItem(
-  id: number,
-  formData: FormData
-) {
-  const name = String(formData.get("name") || "").trim();
-  const category = String(formData.get("category") || "").trim();
-  const unit = String(formData.get("unit") || "").trim();
-  const priceRaw = formData.get("price");
-  const price = Number(priceRaw);
+type UpdateItemInput = {
+  id: number;
+  name: string;
+  category: string;
+  unit: string;
+  price: number;
+};
 
-  if (!name || !category || !unit || Number.isNaN(price)) {
-    throw new Error("Datos inválidos");
-  }
+export async function updateItem(data: UpdateItemInput) {
+  const { id, ...rest } = data;
 
   await prisma.item.update({
     where: { id },
-    data: { name, category, unit, price },
+    data: rest,
   });
-
-  // 🔄 refresca la página (App Router)
-  revalidatePath("/");
 }

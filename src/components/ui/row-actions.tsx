@@ -1,34 +1,51 @@
-"use server";
+"use client";
 
-import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
+import { useState } from "react";
 
-export async function updateItem(id: number, formData: FormData) {
-  const name = String(formData.get("name") || "").trim();
-  const category = String(formData.get("category") || "").trim();
-  const unit = String(formData.get("unit") || "").trim();
-  const priceRaw = String(formData.get("price") || "").trim();
+type Props = {
+  onEdit?: () => void;
+  onDelete?: () => void;
+};
 
-  if (!name || !category || !unit || !priceRaw) {
-    throw new Error("Todos los campos son obligatorios");
-  }
+export function RowActions({ onEdit, onDelete }: Props) {
+  const [open, setOpen] = useState(false);
 
-  const price = Number(priceRaw);
-  if (Number.isNaN(price)) {
-    throw new Error("Precio inválido");
-  }
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="px-2 py-1 text-xl leading-none"
+      >
+        ⋯
+      </button>
 
-  const updated = await prisma.item.update({
-    where: { id },
-    data: {
-      name,
-      category,
-      unit,
-      price,
-    },
-  });
+      {open && (
+        <div className="absolute right-0 z-50 w-32 rounded-md border bg-white shadow">
+          {onEdit && (
+            <button
+              onClick={() => {
+                setOpen(false);
+                onEdit();
+              }}
+              className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-100"
+            >
+              Editar
+            </button>
+          )}
 
-  revalidatePath("/");
-
-  return updated;
+          {onDelete && (
+            <button
+              onClick={() => {
+                setOpen(false);
+                onDelete();
+              }}
+              className="block w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
+            >
+              Eliminar
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
