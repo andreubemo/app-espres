@@ -7,12 +7,54 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/* =========================
+   MODELO CATÁLOGO
+========================= */
+
 model Item {
-  id        Int      @id @default(autoincrement())
+  id        Int           @id @default(autoincrement())
   name      String
   category  String
   unit      String
-  price     Decimal
+  price     Decimal       @db.Decimal(10, 2)
+
+  budgetItems BudgetItem[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/* =========================
+   MODELO PRESUPUESTO
+========================= */
+
+model Budget {
+  id        Int           @id @default(autoincrement())
+  title     String
+  client    String?
+  notes     String?
+
+  items     BudgetItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/* =========================
+   LINEAS DE PRESUPUESTO
+========================= */
+
+model BudgetItem {
+  id        Int      @id @default(autoincrement())
+
+  budgetId  Int
+  itemId    Int
+
+  quantity  Decimal  @db.Decimal(10, 2)
+  unitPrice Decimal  @db.Decimal(10, 2)
+
+  budget    Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  item      Item     @relation(fields: [itemId], references: [id])
+
+  createdAt DateTime @default(now())
 }

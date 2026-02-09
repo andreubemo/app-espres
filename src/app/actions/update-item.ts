@@ -10,26 +10,18 @@ export async function updateItem(
   const name = String(formData.get("name") || "").trim();
   const category = String(formData.get("category") || "").trim();
   const unit = String(formData.get("unit") || "").trim();
-  const priceRaw = String(formData.get("price") || "").trim();
-
-  if (!name || !category || !unit || !priceRaw) {
-    throw new Error("Todos los campos son obligatorios");
-  }
-
+  const priceRaw = formData.get("price");
   const price = Number(priceRaw);
-  if (Number.isNaN(price)) {
-    throw new Error("Precio inválido");
+
+  if (!name || !category || !unit || Number.isNaN(price)) {
+    throw new Error("Datos inválidos");
   }
 
   await prisma.item.update({
     where: { id },
-    data: {
-      name,
-      category,
-      unit,
-      price,
-    },
+    data: { name, category, unit, price },
   });
 
+  // 🔄 refresca la página (App Router)
   revalidatePath("/");
 }
