@@ -16,10 +16,11 @@ import BudgetTotals from '@/ui/budgets/BudgetTotals';
 
 export default function NewBudgetPage() {
   const [budget, setBudget] = useState<Budget | null>(null);
-  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(true);
 
   return (
     <main className="p-8 space-y-6">
+      {/* MODAL DATOS BASE */}
       <BudgetBaseModal
         open={!budget}
         onSubmit={(data) => {
@@ -32,9 +33,11 @@ export default function NewBudgetPage() {
               complexity: data.complexity,
             })
           );
+          setWizardOpen(true);
         }}
       />
 
+      {/* CABECERA */}
       <header className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold">Nuevo presupuesto</h1>
@@ -48,27 +51,29 @@ export default function NewBudgetPage() {
 
         {budget && (
           <button
-            onClick={() => setWizardOpen(true)}
-            className="rounded bg-black px-4 py-2 text-white"
+            onClick={() => setWizardOpen((o) => !o)}
+            className="rounded border px-4 py-2"
           >
-            Añadir partida
+            {wizardOpen ? 'Ocultar selector' : 'Mostrar selector'}
           </button>
         )}
       </header>
 
+      {/* WIZARD SIEMPRE DISPONIBLE */}
       {budget && (
-  <BudgetWizardFromCatalog
-    open={wizardOpen}
-    onClose={() => setWizardOpen(false)}
-    onAdd={(line) => {
-      setBudget((b) => (b ? addLine(b, line) : b));
-    }}
-  />
-)}
+        <BudgetWizardFromCatalog
+          open={wizardOpen}
+          onAdd={(line) => {
+            setBudget((b) => (b ? addLine(b, line) : b));
+          }}
+        />
+      )}
 
-
+      {/* CUERPO SIEMPRE VISIBLE */}
       <section className="grid grid-cols-3 gap-6">
         <div className="col-span-2 rounded border p-4">
+          <h2 className="mb-3 font-semibold">Partidas</h2>
+
           {budget?.lines.length ? (
             <BudgetLinesPanel
               lines={budget.lines}
@@ -78,12 +83,14 @@ export default function NewBudgetPage() {
             />
           ) : (
             <p className="text-sm text-gray-500">
-              No hay partidas añadidas.
+              No hay partidas añadidas todavía.
             </p>
           )}
         </div>
 
-        <aside className="rounded border p-4">
+        <aside className="rounded border p-4 space-y-4">
+          <h2 className="font-semibold">Resumen</h2>
+
           {budget && (
             <BudgetTotals
               subtotal={budget.subtotal}

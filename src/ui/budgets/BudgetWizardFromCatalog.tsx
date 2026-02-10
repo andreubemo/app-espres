@@ -1,17 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import Modal from '../common/Modal';
 import {
   getCatalogFamilies,
   getItemsByFamily,
-  CatalogItemWithPrice,
+  type CatalogItemWithPrice,
 } from '@/domain/catalog/catalog.service';
 
 export default function BudgetWizardFromCatalog({
   open,
   onAdd,
-  onClose,
 }: {
   open: boolean;
   onAdd: (line: {
@@ -21,7 +21,6 @@ export default function BudgetWizardFromCatalog({
     quantity: number;
     unitPrice: number;
   }) => void;
-  onClose: () => void;
 }) {
   const families = getCatalogFamilies();
 
@@ -29,17 +28,47 @@ export default function BudgetWizardFromCatalog({
   const [selectedItem, setSelectedItem] = useState<CatalogItemWithPrice | null>(null);
   const [quantity, setQuantity] = useState(1);
 
+  useEffect(() => {
+    if (!open) {
+      flushSync(() => {
+        setStep(0);
+        setSelectedItem(null);
+        setQuantity(1);
+      });
+    }
+  }, [open]);
+
+  if (!open) return null;
+
   const familyKey = families[step];
   const items = familyKey ? getItemsByFamily(familyKey) : [];
 
+  function goNextFamily() {
+    setSelectedItem(null);
+    setQuantity(1);
+    setStep((s) => Math.min(s + 1, families.length - 1));
+  }
+
+  function goPrevFamily() {
+    setSelectedItem(null);
+    setQuantity(1);
+    setStep((s) => Math.max(s - 1, 0));
+  }
+
   return (
-    <Modal open={open} title="Añadir partida">
-      {/* PASO 1: FAMILIA */}
+    <Modal open={open} title="Añadir partidas (flujo continuo)">
+      {/* PASO 1 — SELECCIÓN DE ITEM */}
       {!selectedItem && (
         <div className="space-y-3">
           <h3 className="font-semibold capitalize">
             {familyKey?.replace(/_/g, ' ')}
           </h3>
+
+          {items.length === 0 && (
+            <p className="text-sm text-gray-500">
+              No hay partidas en esta familia.
+            </p>
+          )}
 
           {items.map((item) => (
             <button
@@ -54,21 +83,22 @@ export default function BudgetWizardFromCatalog({
           <div className="flex justify-between pt-3">
             <button
               disabled={step === 0}
-              onClick={() => setStep(step - 1)}
+              onClick={goPrevFamily}
             >
               ← Anterior
             </button>
+
             <button
-              disabled={step === families.length - 1}
-              onClick={() => setStep(step + 1)}
+              className="text-sm text-gray-600"
+              onClick={goNextFamily}
             >
-              Siguiente →
+              Ignorar familia →
             </button>
           </div>
         </div>
       )}
 
-      {/* PASO 2: CANTIDAD */}
+      {/* PASO 2 — CANTIDAD */}
       {selectedItem && (
         <div className="space-y-4">
           <h3 className="font-semibold">{selectedItem.item}</h3>
@@ -85,28 +115,38 @@ export default function BudgetWizardFromCatalog({
             onChange={(e) => setQuantity(Number(e.target.value))}
           />
 
-          <div className="flex justify-between">
-            <button onClick={() => setSelectedItem(null)}>
+          <div className="flex justify-between items-center">
+            <button
+              className="text-sm text-gray-600"
+              onClick={() => setSelectedItem(null)}
+            >
               ← Cambiar item
             </button>
 
-            <button
-              className="bg-black px-4 py-2 text-white"
-              onClick={() => {
-                onAdd({
-                  family: selectedItem.family,
-                  item: selectedItem.item,
-                  unit: selectedItem.unit,
-                  quantity,
-                  unitPrice: selectedItem.unitPrice,
-                });
-                setSelectedItem(null);
-                setQuantity(1);
-                onClose();
-              }}
-            >
-              Añadir partida
-            </button>
+            <div className="flex gap-3">
+              <button
+                className="text-sm text-gray-600"
+                onClick={goNextFamily}
+              >
+                Ignorar
+              </button>
+
+              <button
+                className="bg-black px-4 py-2 text-white"
+                onClick={() => {
+                  onAdd({
+                    family: selectedItem.family,
+                    item: selectedItem.item,
+                    unit: selectedItem.unit,
+                    quantity,
+                    unitPrice: selectedItem.unitPrice,
+                  });
+                  goNextFamily();
+                }}
+              >
+                Añadir y seguir →
+              </button>
+            </div>
           </div>
         </div>
       )}
