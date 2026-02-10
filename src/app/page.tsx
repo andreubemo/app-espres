@@ -1,7 +1,5 @@
-import { getItems } from "./actions/items";
-import CatalogClient from "./catalog-client";
+import { redirect } from "next/navigation";
 
-export default async function Page() {
-  const items = await getItems();
-  return <CatalogClient initialData={items} />;
+export default function Page() {
+  redirect("/budgets/new");
 }

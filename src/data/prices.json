@@ -1,0 +1,86 @@
+{
+  "tarima_madera_tarima_madera_estandar_de_feria": {
+    "default": 70
+  },
+  "tarima_moqueta_tarima_con_moqueta_ferial_estandar": {
+    "default": 70
+  },
+  "tarima_tecnica_tarima_tecnica_elevada_registrable": {
+    "default": 70
+  },
+  "muro_melamina_muro_melamina_blanca_19mm": {
+    "default": 60
+  },
+  "muro_melamina_muro_melamina_color_estandar": {
+    "default": 60
+  },
+  "muro_mdf_muro_mdf_pintado_liso": {
+    "default": 60
+  },
+  "banner_lona_banner_lona_impresa_alta_resolucion": {
+    "default": 45
+  },
+  "banner_textil_banner_textil_tensado_con_perfil": {
+    "default": 45
+  },
+  "viga_madera_viga_decorativa_madera_forrada": {
+    "default": 30
+  },
+  "pilar_madera_pilar_forrado_en_madera": {
+    "default": 65
+  },
+  "podium_madera_podium_expositor_estandar_lacado": {
+    "default": 450
+  },
+  "techos_textil_techo_textil_decorativo_suspendido": {
+    "default": 80
+  },
+  "techos_madera_techo_de_madera_suspendido": {
+    "default": 80
+  },
+  "backlights_aluminio_backlight_led_aluminio_estandar": {
+    "default": 150
+  },
+  "liston_madera_liston_decorativo_vertical_madera": {
+    "default": 20
+  },
+  "perfil_aluminio_perfil_aluminio_estructural_feria": {
+    "default": 25
+  },
+  "mostrador_madera_mostrador_atencion_al_publico_estandar": {
+    "default": 720
+  },
+  "mesa_madera_mesa_expositiva_estandar": {
+    "default": 280
+  },
+  "jardinera_madera_jardinera_decorativa_madera": {
+    "default": 195
+  },
+  "panel_mdf_panel_mdf_liso_estandar": {
+    "default": 45
+  },
+  "tapetas_mdf_tapeta_de_remate_mdf": {
+    "default": 10
+  },
+  "curvas_mdf_elemento_curvo_mdf_mecanizado": {
+    "default": 115
+  },
+  "mecanizados_cnc_mecanizado_cnc_estandar": {
+    "default": 58
+  },
+  "herrero_acero_estructura_metalica_de_stand": {
+    "default": 4.2
+  },
+  "pintura_laca_pintura_lacada_blanca_estandar": {
+    "default": 20
+  },
+  "logistica_y_personal_montaje_horas_de_montaje_en_feria": {
+    "default": 45
+  },
+  "logistica_y_personal_desmontaje_horas_de_desmontaje_en_feria": {
+    "default": 45
+  },
+  "logistica_y_personal_transporte_transporte_de_material_feria": {
+    "default": 45
+  }
+}

@@ -30,6 +30,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "scripts/import-excel-to-json.js"  ],
   "exclude": ["node_modules"]
 }
