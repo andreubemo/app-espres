@@ -1,0 +1,238 @@
+{
+  "tarima": [
+    {
+      "id": "tarima_madera_tarima_madera_estandar_de_feria",
+      "family": "Tarima",
+      "material": "Madera",
+      "item": "Tarima madera estándar de feria",
+      "unit": "m2"
+    },
+    {
+      "id": "tarima_moqueta_tarima_con_moqueta_ferial_estandar",
+      "family": "Tarima",
+      "material": "Moqueta",
+      "item": "Tarima con moqueta ferial estándar",
+      "unit": "m2"
+    },
+    {
+      "id": "tarima_tecnica_tarima_tecnica_elevada_registrable",
+      "family": "Tarima",
+      "material": "Técnica",
+      "item": "Tarima técnica elevada registrable",
+      "unit": "m2"
+    }
+  ],
+  "muro": [
+    {
+      "id": "muro_melamina_muro_melamina_blanca_19mm",
+      "family": "Muro",
+      "material": "Melamina",
+      "item": "Muro melamina blanca 19mm",
+      "unit": "m2"
+    },
+    {
+      "id": "muro_melamina_muro_melamina_color_estandar",
+      "family": "Muro",
+      "material": "Melamina",
+      "item": "Muro melamina color estándar",
+      "unit": "m2"
+    },
+    {
+      "id": "muro_mdf_muro_mdf_pintado_liso",
+      "family": "Muro",
+      "material": "MDF",
+      "item": "Muro MDF pintado liso",
+      "unit": "m2"
+    }
+  ],
+  "banner": [
+    {
+      "id": "banner_lona_banner_lona_impresa_alta_resolucion",
+      "family": "Banner",
+      "material": "Lona",
+      "item": "Banner lona impresa alta resolución",
+      "unit": "m2"
+    },
+    {
+      "id": "banner_textil_banner_textil_tensado_con_perfil",
+      "family": "Banner",
+      "material": "Textil",
+      "item": "Banner textil tensado con perfil",
+      "unit": "m2"
+    }
+  ],
+  "viga": [
+    {
+      "id": "viga_madera_viga_decorativa_madera_forrada",
+      "family": "Viga",
+      "material": "Madera",
+      "item": "Viga decorativa madera forrada",
+      "unit": "ml"
+    }
+  ],
+  "pilar": [
+    {
+      "id": "pilar_madera_pilar_forrado_en_madera",
+      "family": "Pilar",
+      "material": "Madera",
+      "item": "Pilar forrado en madera",
+      "unit": "m2"
+    }
+  ],
+  "podium": [
+    {
+      "id": "podium_madera_podium_expositor_estandar_lacado",
+      "family": "Podium",
+      "material": "Madera",
+      "item": "Podium expositor estándar lacado",
+      "unit": "unit"
+    }
+  ],
+  "techos": [
+    {
+      "id": "techos_textil_techo_textil_decorativo_suspendido",
+      "family": "Techos",
+      "material": "Textil",
+      "item": "Techo textil decorativo suspendido",
+      "unit": "m2"
+    },
+    {
+      "id": "techos_madera_techo_de_madera_suspendido",
+      "family": "Techos",
+      "material": "Madera",
+      "item": "Techo de madera suspendido",
+      "unit": "m2"
+    }
+  ],
+  "backlights": [
+    {
+      "id": "backlights_aluminio_backlight_led_aluminio_estandar",
+      "family": "Backlights",
+      "material": "Aluminio",
+      "item": "Backlight LED aluminio estándar",
+      "unit": "m2"
+    }
+  ],
+  "liston": [
+    {
+      "id": "liston_madera_liston_decorativo_vertical_madera",
+      "family": "Liston",
+      "material": "Madera",
+      "item": "Listón decorativo vertical madera",
+      "unit": "ml"
+    }
+  ],
+  "perfil": [
+    {
+      "id": "perfil_aluminio_perfil_aluminio_estructural_feria",
+      "family": "Perfil",
+      "material": "Aluminio",
+      "item": "Perfil aluminio estructural feria",
+      "unit": "ml"
+    }
+  ],
+  "mostrador": [
+    {
+      "id": "mostrador_madera_mostrador_atencion_al_publico_estandar",
+      "family": "Mostrador",
+      "material": "Madera",
+      "item": "Mostrador atención al público estándar",
+      "unit": "unit"
+    }
+  ],
+  "mesa": [
+    {
+      "id": "mesa_madera_mesa_expositiva_estandar",
+      "family": "Mesa",
+      "material": "Madera",
+      "item": "Mesa expositiva estándar",
+      "unit": "unit"
+    }
+  ],
+  "jardinera": [
+    {
+      "id": "jardinera_madera_jardinera_decorativa_madera",
+      "family": "Jardinera",
+      "material": "Madera",
+      "item": "Jardinera decorativa madera",
+      "unit": "unit"
+    }
+  ],
+  "panel": [
+    {
+      "id": "panel_mdf_panel_mdf_liso_estandar",
+      "family": "Panel",
+      "material": "MDF",
+      "item": "Panel MDF liso estándar",
+      "unit": "m2"
+    }
+  ],
+  "tapetas": [
+    {
+      "id": "tapetas_mdf_tapeta_de_remate_mdf",
+      "family": "Tapetas",
+      "material": "MDF",
+      "item": "Tapeta de remate MDF",
+      "unit": "ml"
+    }
+  ],
+  "curvas": [
+    {
+      "id": "curvas_mdf_elemento_curvo_mdf_mecanizado",
+      "family": "Curvas",
+      "material": "MDF",
+      "item": "Elemento curvo MDF mecanizado",
+      "unit": "m2"
+    }
+  ],
+  "mecanizados": [
+    {
+      "id": "mecanizados_cnc_mecanizado_cnc_estandar",
+      "family": "Mecanizados",
+      "material": "CNC",
+      "item": "Mecanizado CNC estándar",
+      "unit": "hour"
+    }
+  ],
+  "herrero": [
+    {
+      "id": "herrero_acero_estructura_metalica_de_stand",
+      "family": "Herrero",
+      "material": "Acero",
+      "item": "Estructura metálica de stand",
+      "unit": "kg"
+    }
+  ],
+  "pintura": [
+    {
+      "id": "pintura_laca_pintura_lacada_blanca_estandar",
+      "family": "Pintura",
+      "material": "Laca",
+      "item": "Pintura lacada blanca estándar",
+      "unit": "m2"
+    }
+  ],
+  "logistica_y_personal": [
+    {
+      "id": "logistica_y_personal_montaje_horas_de_montaje_en_feria",
+      "family": "Logística y Personal",
+      "material": "Montaje",
+      "item": "Horas de montaje en feria",
+      "unit": "hour"
+    },
+    {
+      "id": "logistica_y_personal_desmontaje_horas_de_desmontaje_en_feria",
+      "family": "Logística y Personal",
+      "material": "Desmontaje",
+      "item": "Horas de desmontaje en feria",
+      "unit": "hour"
+    },
+    {
+      "id": "logistica_y_personal_transporte_transporte_de_material_feria",
+      "family": "Logística y Personal",
+      "material": "Transporte",
+      "item": "Transporte de material feria",
+      "unit": "day"
+    }
+  ]
+}
