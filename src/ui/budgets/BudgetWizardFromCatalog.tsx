@@ -6,12 +6,13 @@ import Modal from '../common/Modal';
 import {
   getCatalogFamilies,
   getItemsByFamily,
-  type CatalogItemWithPrice,
+  CatalogItemWithPrice,
 } from '@/domain/catalog/catalog.service';
 
 export default function BudgetWizardFromCatalog({
   open,
   onAdd,
+  onClose,
 }: {
   open: boolean;
   onAdd: (line: {
@@ -21,6 +22,7 @@ export default function BudgetWizardFromCatalog({
     quantity: number;
     unitPrice: number;
   }) => void;
+  onClose: () => void;
 }) {
   const families = getCatalogFamilies();
 
@@ -43,10 +45,16 @@ export default function BudgetWizardFromCatalog({
   const familyKey = families[step];
   const items = familyKey ? getItemsByFamily(familyKey) : [];
 
+  const isLastStep = step >= families.length - 1;
+
   function goNextFamily() {
+    if (isLastStep) {
+      onClose();
+      return;
+    }
     setSelectedItem(null);
     setQuantity(1);
-    setStep((s) => Math.min(s + 1, families.length - 1));
+    setStep((s) => s + 1);
   }
 
   function goPrevFamily() {
@@ -55,8 +63,26 @@ export default function BudgetWizardFromCatalog({
     setStep((s) => Math.max(s - 1, 0));
   }
 
+  function confirmAdd() {
+    if (!selectedItem) return;
+
+    onAdd({
+      family: selectedItem.family,
+      item: selectedItem.item,
+      unit: selectedItem.unit,
+      quantity,
+      unitPrice: selectedItem.unitPrice,
+    });
+
+    goNextFamily();
+  }
+
   return (
-    <Modal open={open} title="Añadir partidas (flujo continuo)">
+    <Modal
+      open={open}
+      title="Añadir partidas"
+      onClose={onClose}
+    >
       {/* PASO 1 — SELECCIÓN DE ITEM */}
       {!selectedItem && (
         <div className="space-y-3">
@@ -112,7 +138,14 @@ export default function BudgetWizardFromCatalog({
             min={1}
             className="w-full border p-2"
             value={quantity}
+            autoFocus
             onChange={(e) => setQuantity(Number(e.target.value))}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                confirmAdd();
+              }
+            }}
           />
 
           <div className="flex justify-between items-center">
@@ -133,16 +166,7 @@ export default function BudgetWizardFromCatalog({
 
               <button
                 className="bg-black px-4 py-2 text-white"
-                onClick={() => {
-                  onAdd({
-                    family: selectedItem.family,
-                    item: selectedItem.item,
-                    unit: selectedItem.unit,
-                    quantity,
-                    unitPrice: selectedItem.unitPrice,
-                  });
-                  goNextFamily();
-                }}
+                onClick={confirmAdd}
               >
                 Añadir y seguir →
               </button>

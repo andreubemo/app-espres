@@ -1,27 +1,37 @@
-"use client";
+'use client';
 
-import { ReactNode } from "react";
+import { ReactNode } from 'react';
 
-export function Modal({
+export default function Modal({
   open,
-  onClose,
   title,
+  onClose,
   children,
 }: {
   open: boolean;
-  onClose: () => void;
   title: string;
+  onClose?: () => void;
   children: ReactNode;
 }) {
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
+      <div className="relative w-full max-w-xl rounded bg-white p-4 shadow">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{title}</h2>
-          <button onClick={onClose} className="text-gray-500">✕</button>
+          <h2 className="text-lg font-bold">{title}</h2>
+
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="text-xl leading-none hover:opacity-70"
+              aria-label="Cerrar"
+            >
+              ×
+            </button>
+          )}
         </div>
+
         {children}
       </div>
     </div>
