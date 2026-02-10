@@ -1,12 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { flushSync } from 'react-dom';
 import Modal from '../common/Modal';
 import {
   getCatalogFamilies,
   getItemsByFamily,
-  CatalogItemWithPrice,
 } from '@/domain/catalog/catalog.service';
+
+type WizardItem = {
+  id: string;
+  family: string;
+  material: string;
+  item: string;
+  unit: string;
+  unitPrice: number;
+};
 
 export default function BudgetWizardFromCatalog({
   open,
@@ -25,50 +34,94 @@ export default function BudgetWizardFromCatalog({
 }) {
   const families = getCatalogFamilies();
 
-  const [step, setStep] = useState(0);
-  const [selectedItem, setSelectedItem] = useState<CatalogItemWithPrice | null>(null);
-  const [quantity, setQuantity] = useState(1);
+  const [step, setStep] = useState<number>(0);
+  const [selectedItem, setSelectedItem] = useState<WizardItem | null>(null);
+  const [quantity, setQuantity] = useState<number>(1);
+
+  // Reset limpio al cerrar modal
+  useEffect(() => {
+    if (!open) {
+      flushSync(() => {
+        setStep(0);
+        setSelectedItem(null);
+        setQuantity(1);
+      });
+    }
+  }, [open]);
+
+  if (!open) return null;
 
   const familyKey = families[step];
-  const items = familyKey ? getItemsByFamily(familyKey) : [];
+  const items = (familyKey ? getItemsByFamily(familyKey) : []) as WizardItem[];
+
+  const isLastStep = step >= families.length - 1;
+
+  function goNextFamily() {
+    if (isLastStep) {
+      onClose();
+      return;
+    }
+    setSelectedItem(null);
+    setQuantity(1);
+    setStep((s) => s + 1);
+  }
+
+  function goPrevFamily() {
+    setSelectedItem(null);
+    setQuantity(1);
+    setStep((s) => Math.max(s - 1, 0));
+  }
+
+  function confirmAdd() {
+    if (!selectedItem) return;
+
+    onAdd({
+      family: selectedItem.family,
+      item: selectedItem.item,
+      unit: selectedItem.unit,
+      quantity,
+      unitPrice: selectedItem.unitPrice,
+    });
+
+    goNextFamily();
+  }
 
   return (
-    <Modal open={open} title="Añadir partida">
-      {/* PASO 1: FAMILIA */}
+    <Modal open={open} title="Añadir partidas" onClose={onClose}>
+      {/* Paso 1: seleccionar item */}
       {!selectedItem && (
         <div className="space-y-3">
           <h3 className="font-semibold capitalize">
             {familyKey?.replace(/_/g, ' ')}
           </h3>
 
-          {items.map((item) => (
+          {items.length === 0 && (
+            <p className="text-sm text-gray-500">No hay partidas en esta familia.</p>
+          )}
+
+          {items.map((it) => (
             <button
-              key={item.id}
+              key={it.id}
               className="w-full border p-2 text-left hover:bg-gray-50"
-              onClick={() => setSelectedItem(item)}
+              onClick={() => setSelectedItem(it)}
             >
-              {item.item} · {item.unitPrice} € / {item.unit}
+              {it.item} · {it.unitPrice} € / {it.unit}
             </button>
           ))}
 
           <div className="flex justify-between pt-3">
-            <button
-              disabled={step === 0}
-              onClick={() => setStep(step - 1)}
-            >
+            <button disabled={step === 0} onClick={goPrevFamily}>
               ← Anterior
             </button>
-            <button
-              disabled={step === families.length - 1}
-              onClick={() => setStep(step + 1)}
-            >
-              Siguiente →
+
+            <button className="text-sm text-gray-600" onClick={goNextFamily}>
+              Ignorar familia →
             </button>
           </div>
         </div>
       )}
 
-      {/* PASO 2: CANTIDAD */}
+      {/* Paso 2: cantidad */}
       {selectedItem && (
         <div className="space-y-4">
           <h3 className="font-semibold">{selectedItem.item}</h3>
@@ -82,31 +135,30 @@ export default function BudgetWizardFromCatalog({
             min={1}
             className="w-full border p-2"
             value={quantity}
+            autoFocus
             onChange={(e) => setQuantity(Number(e.target.value))}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                confirmAdd();
+              }
+            }}
           />
 
-          <div className="flex justify-between">
-            <button onClick={() => setSelectedItem(null)}>
+          <div className="flex items-center justify-between">
+            <button className="text-sm text-gray-600" onClick={() => setSelectedItem(null)}>
               ← Cambiar item
             </button>
 
-            <button
-              className="bg-black px-4 py-2 text-white"
-              onClick={() => {
-                onAdd({
-                  family: selectedItem.family,
-                  item: selectedItem.item,
-                  unit: selectedItem.unit,
-                  quantity,
-                  unitPrice: selectedItem.unitPrice,
-                });
-                setSelectedItem(null);
-                setQuantity(1);
-                onClose();
-              }}
-            >
-              Añadir partida
-            </button>
+            <div className="flex gap-3">
+              <button className="text-sm text-gray-600" onClick={goNextFamily}>
+                Ignorar
+              </button>
+
+              <button className="bg-black px-4 py-2 text-white" onClick={confirmAdd}>
+                Añadir y seguir →
+              </button>
+            </div>
           </div>
         </div>
       )}
