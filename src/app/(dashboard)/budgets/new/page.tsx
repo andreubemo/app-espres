@@ -10,7 +10,7 @@ import {
 } from '@/domain/budgets/budget.service';
 
 import BudgetBaseModal from '@/ui/budgets/BudgetBaseModal';
-import BudgetWizardModal from '@/ui/budgets/BudgetWizardModal';
+import BudgetWizardFromCatalog from '@/ui/budgets/BudgetWizardFromCatalog';
 import BudgetLinesPanel from '@/ui/budgets/BudgetLinesPanel';
 import BudgetTotals from '@/ui/budgets/BudgetTotals';
 
@@ -57,14 +57,15 @@ export default function NewBudgetPage() {
       </header>
 
       {budget && (
-        <BudgetWizardModal
-          open={wizardOpen}
-          onAdd={(line) => {
-            setBudget((b) => (b ? addLine(b, line) : b));
-            setWizardOpen(false);
-          }}
-        />
-      )}
+  <BudgetWizardFromCatalog
+    open={wizardOpen}
+    onClose={() => setWizardOpen(false)}
+    onAdd={(line) => {
+      setBudget((b) => (b ? addLine(b, line) : b));
+    }}
+  />
+)}
+
 
       <section className="grid grid-cols-3 gap-6">
         <div className="col-span-2 rounded border p-4">
