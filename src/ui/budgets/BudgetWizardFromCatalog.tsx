@@ -1,13 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
 import Modal from '../common/Modal';
 import {
   getCatalogFamilies,
   getItemsByFamily,
-  CatalogItemWithPrice,
 } from '@/domain/catalog/catalog.service';
+
+type WizardItem = {
+  id: string;
+  family: string;
+  material: string;
+  item: string;
+  unit: string;
+  unitPrice: number;
+};
 
 export default function BudgetWizardFromCatalog({
   open,
@@ -26,10 +34,11 @@ export default function BudgetWizardFromCatalog({
 }) {
   const families = getCatalogFamilies();
 
-  const [step, setStep] = useState(0);
-  const [selectedItem, setSelectedItem] = useState<CatalogItemWithPrice | null>(null);
-  const [quantity, setQuantity] = useState(1);
+  const [step, setStep] = useState<number>(0);
+  const [selectedItem, setSelectedItem] = useState<WizardItem | null>(null);
+  const [quantity, setQuantity] = useState<number>(1);
 
+  // Reset limpio al cerrar modal
   useEffect(() => {
     if (!open) {
       flushSync(() => {
@@ -43,7 +52,7 @@ export default function BudgetWizardFromCatalog({
   if (!open) return null;
 
   const familyKey = families[step];
-  const items = familyKey ? getItemsByFamily(familyKey) : [];
+  const items = (familyKey ? getItemsByFamily(familyKey) : []) as WizardItem[];
 
   const isLastStep = step >= families.length - 1;
 
@@ -78,12 +87,8 @@ export default function BudgetWizardFromCatalog({
   }
 
   return (
-    <Modal
-      open={open}
-      title="Añadir partidas"
-      onClose={onClose}
-    >
-      {/* PASO 1 — SELECCIÓN DE ITEM */}
+    <Modal open={open} title="Añadir partidas" onClose={onClose}>
+      {/* Paso 1: seleccionar item */}
       {!selectedItem && (
         <div className="space-y-3">
           <h3 className="font-semibold capitalize">
@@ -91,40 +96,32 @@ export default function BudgetWizardFromCatalog({
           </h3>
 
           {items.length === 0 && (
-            <p className="text-sm text-gray-500">
-              No hay partidas en esta familia.
-            </p>
+            <p className="text-sm text-gray-500">No hay partidas en esta familia.</p>
           )}
 
-          {items.map((item) => (
+          {items.map((it) => (
             <button
-              key={item.id}
+              key={it.id}
               className="w-full border p-2 text-left hover:bg-gray-50"
-              onClick={() => setSelectedItem(item)}
+              onClick={() => setSelectedItem(it)}
             >
-              {item.item} · {item.unitPrice} € / {item.unit}
+              {it.item} · {it.unitPrice} € / {it.unit}
             </button>
           ))}
 
           <div className="flex justify-between pt-3">
-            <button
-              disabled={step === 0}
-              onClick={goPrevFamily}
-            >
+            <button disabled={step === 0} onClick={goPrevFamily}>
               ← Anterior
             </button>
 
-            <button
-              className="text-sm text-gray-600"
-              onClick={goNextFamily}
-            >
+            <button className="text-sm text-gray-600" onClick={goNextFamily}>
               Ignorar familia →
             </button>
           </div>
         </div>
       )}
 
-      {/* PASO 2 — CANTIDAD */}
+      {/* Paso 2: cantidad */}
       {selectedItem && (
         <div className="space-y-4">
           <h3 className="font-semibold">{selectedItem.item}</h3>
@@ -148,26 +145,17 @@ export default function BudgetWizardFromCatalog({
             }}
           />
 
-          <div className="flex justify-between items-center">
-            <button
-              className="text-sm text-gray-600"
-              onClick={() => setSelectedItem(null)}
-            >
+          <div className="flex items-center justify-between">
+            <button className="text-sm text-gray-600" onClick={() => setSelectedItem(null)}>
               ← Cambiar item
             </button>
 
             <div className="flex gap-3">
-              <button
-                className="text-sm text-gray-600"
-                onClick={goNextFamily}
-              >
+              <button className="text-sm text-gray-600" onClick={goNextFamily}>
                 Ignorar
               </button>
 
-              <button
-                className="bg-black px-4 py-2 text-white"
-                onClick={confirmAdd}
-              >
+              <button className="bg-black px-4 py-2 text-white" onClick={confirmAdd}>
                 Añadir y seguir →
               </button>
             </div>

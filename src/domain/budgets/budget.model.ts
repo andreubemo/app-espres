@@ -1,4 +1,4 @@
-export type BudgetComplexity = "low" | "medium" | "high";
+export type BudgetComplexity = 'low' | 'medium' | 'high';
 
 export interface BudgetLine {
   id: string;
@@ -10,12 +10,19 @@ export interface BudgetLine {
   total: number;
 }
 
+export interface BudgetDimensions {
+  width: number;
+  length: number;
+  surfaceM2: number;
+  perimeterML: number;
+}
+
 export interface Budget {
   code: string;
   project: string;
   date: string;
-  surfaceM2: number;
   complexity: BudgetComplexity;
+  dimensions: BudgetDimensions;
   lines: BudgetLine[];
   subtotal: number;
   total: number;
