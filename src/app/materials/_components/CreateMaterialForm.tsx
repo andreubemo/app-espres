@@ -3,11 +3,7 @@
 import { useState, useTransition } from "react"
 import { createMaterialAction } from "../actions"
 
-export default function CreateMaterialForm({
-  companyId,
-}: {
-  companyId: string
-}) {
+export default function CreateMaterialForm() {
   const [isPending, startTransition] = useTransition()
 
   const [name, setName] = useState("")
@@ -24,7 +20,6 @@ export default function CreateMaterialForm({
         unit,
         price: Number(price),
         description,
-        companyId,
       })
 
       setName("")

@@ -1,6 +1,6 @@
 import { getServerSession } from "@/lib/session"
 import { getMaterialsByCompany } from "@/server/services/material.service"
-import CreateMaterialForm from "@/app/materials/_components/CreateMaterialForm"
+import CreateMaterialForm from "./_components/CreateMaterialForm"
 
 export default async function MaterialsPage() {
   const session = await getServerSession()
@@ -10,7 +10,7 @@ export default async function MaterialsPage() {
     <main className="p-8 space-y-6">
       <h1 className="text-2xl font-bold">Materiales</h1>
 
-      <CreateMaterialForm companyId={session.user.companyId} />
+      <CreateMaterialForm />
 
       <div className="border rounded p-4">
         <h2 className="font-semibold mb-4">Listado</h2>
