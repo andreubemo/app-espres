@@ -15,7 +15,16 @@ export function createEmptyBudget(data: {
   complexity: BudgetComplexity;
 }): Budget {
   return {
-    ...data,
+    code: data.code,
+    project: data.project,
+    date: data.date,
+    complexity: data.complexity,
+    dimensions: {
+      width: 0,
+      length: 0,
+      surfaceM2: data.surfaceM2,
+      perimeterML: 0,
+    },
     lines: [],
     subtotal: 0,
     total: 0,

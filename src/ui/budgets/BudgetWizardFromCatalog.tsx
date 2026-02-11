@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { flushSync } from 'react-dom';
 import Modal from '../common/Modal';
 import {
   getCatalogFamilies,
@@ -41,11 +40,9 @@ export default function BudgetWizardFromCatalog({
   // Reset limpio al cerrar modal
   useEffect(() => {
     if (!open) {
-      flushSync(() => {
-        setStep(0);
-        setSelectedItem(null);
-        setQuantity(1);
-      });
+      setStep(0);
+      setSelectedItem(null);
+      setQuantity(1);
     }
   }, [open]);
 
@@ -96,7 +93,9 @@ export default function BudgetWizardFromCatalog({
           </h3>
 
           {items.length === 0 && (
-            <p className="text-sm text-gray-500">No hay partidas en esta familia.</p>
+            <p className="text-sm text-gray-500">
+              No hay partidas en esta familia.
+            </p>
           )}
 
           {items.map((it) => (
@@ -114,7 +113,10 @@ export default function BudgetWizardFromCatalog({
               ← Anterior
             </button>
 
-            <button className="text-sm text-gray-600" onClick={goNextFamily}>
+            <button
+              className="text-sm text-gray-600"
+              onClick={goNextFamily}
+            >
               Ignorar familia →
             </button>
           </div>
@@ -146,16 +148,25 @@ export default function BudgetWizardFromCatalog({
           />
 
           <div className="flex items-center justify-between">
-            <button className="text-sm text-gray-600" onClick={() => setSelectedItem(null)}>
+            <button
+              className="text-sm text-gray-600"
+              onClick={() => setSelectedItem(null)}
+            >
               ← Cambiar item
             </button>
 
             <div className="flex gap-3">
-              <button className="text-sm text-gray-600" onClick={goNextFamily}>
+              <button
+                className="text-sm text-gray-600"
+                onClick={goNextFamily}
+              >
                 Ignorar
               </button>
 
-              <button className="bg-black px-4 py-2 text-white" onClick={confirmAdd}>
+              <button
+                className="bg-black px-4 py-2 text-white"
+                onClick={confirmAdd}
+              >
                 Añadir y seguir →
               </button>
             </div>

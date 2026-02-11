@@ -1,60 +1,95 @@
-generator client {
-  provider = "prisma-client-js"
-}
+// prisma/schema.prisma
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-/* =========================
-   MODELO CATÁLOGO
-========================= */
-
-model Item {
-  id        Int           @id @default(autoincrement())
-  name      String
-  category  String
-  unit      String
-  price     Decimal       @db.Decimal(10, 2)
-
-  budgetItems BudgetItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
 }
 
-/* =========================
-   MODELO PRESUPUESTO
-========================= */
+model Company {
+  id        String    @id @default(cuid())
+  name      String
+  users     User[]
+  clients   Client[]
+  materials Material[]
+  budgets   Budget[]
+  createdAt DateTime  @default(now())
+}
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  password       String
+  role           Role
+  company        Company   @relation(fields: [companyId], references: [id])
+  companyId      String
+  budgetsCreated Budget[]  @relation("CreatedBy")
+  createdAt      DateTime  @default(now())
+}
+
+model Client {
+  id        String    @id @default(cuid())
+  name      String
+  email     String
+  password  String
+  company   Company   @relation(fields: [companyId], references: [id])
+  companyId String
+  budgets   Budget[]
+  createdAt DateTime  @default(now())
+
+  @@unique([email, companyId])
+}
+
+model Material {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  unit        String
+  price       Float
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String
+  createdAt   DateTime @default(now())
+}
 
 model Budget {
-  id        Int           @id @default(autoincrement())
-  title     String
-  client    String?
-  notes     String?
-
-  items     BudgetItem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String        @id @default(cuid())
+  reference   String
+  status      BudgetStatus  @default(DRAFT)
+  company     Company       @relation(fields: [companyId], references: [id])
+  companyId   String
+  client      Client        @relation(fields: [clientId], references: [id])
+  clientId    String
+  createdBy   User          @relation("CreatedBy", fields: [createdById], references: [id])
+  createdById String
+  versions    BudgetVersion[]
+  createdAt   DateTime      @default(now())
 }
 
-/* =========================
-   LINEAS DE PRESUPUESTO
-========================= */
-
-model BudgetItem {
-  id        Int      @id @default(autoincrement())
-
-  budgetId  Int
-  itemId    Int
-
-  quantity  Decimal  @db.Decimal(10, 2)
-  unitPrice Decimal  @db.Decimal(10, 2)
-
-  budget    Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
-  item      Item     @relation(fields: [itemId], references: [id])
-
+model BudgetVersion {
+  id        String   @id @default(cuid())
+  version   Int
+  data      Json
+  sent      Boolean  @default(false)
+  budget    Budget   @relation(fields: [budgetId], references: [id])
+  budgetId  String
   createdAt DateTime @default(now())
+
+  @@unique([budgetId, version])
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  WORKER
+}
+
+enum BudgetStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
 }
