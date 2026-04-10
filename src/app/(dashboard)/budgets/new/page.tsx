@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Budget } from "@/domain/budgets/budget.model";
@@ -25,8 +25,17 @@ export default function NewBudgetPage() {
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
+  const canSave = useMemo(() => {
+    return Boolean(budget && budget.lines.length > 0 && !isSaving);
+  }, [budget, isSaving]);
+
   async function handleSaveDraft() {
     if (!budget) return;
+
+    if (budget.lines.length === 0) {
+      setSaveMessage("Añade al menos una partida antes de guardar el borrador.");
+      return;
+    }
 
     setSaveMessage(null);
     setIsSaving(true);
@@ -52,7 +61,7 @@ export default function NewBudgetPage() {
   }
 
   return (
-    <main className="p-8 space-y-6">
+    <main className="space-y-6 p-8">
       <BudgetBaseModal
         open={!budget}
         onSubmit={(data) => {
@@ -76,7 +85,7 @@ export default function NewBudgetPage() {
           <h1 className="text-2xl font-bold">Nuevo presupuesto</h1>
 
           {budget && (
-            <p className="text-sm text-gray-600 space-y-1">
+            <p className="space-y-1 text-sm text-gray-600">
               <span>
                 Código <strong>{budget.code}</strong> · Proyecto{" "}
                 <strong>{budget.project}</strong>
@@ -87,6 +96,10 @@ export default function NewBudgetPage() {
                 {budget.dimensions.surfaceM2} m² ·{" "}
                 {budget.dimensions.perimeterML} ml
               </span>
+              <br />
+              <span>
+                {budget.lines.length} partidas · {budget.total.toFixed(2)} €
+              </span>
             </p>
           )}
         </div>
@@ -94,7 +107,7 @@ export default function NewBudgetPage() {
         {budget && (
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setWizardOpen((o) => !o)}
+              onClick={() => setWizardOpen((open) => !open)}
               className="rounded border px-4 py-2"
               type="button"
             >
@@ -105,7 +118,7 @@ export default function NewBudgetPage() {
               onClick={handleSaveDraft}
               className="rounded bg-black px-4 py-2 text-white disabled:opacity-50"
               type="button"
-              disabled={isSaving}
+              disabled={!canSave}
             >
               {isSaving ? "Guardando..." : "Guardar borrador"}
             </button>
@@ -113,18 +126,14 @@ export default function NewBudgetPage() {
         )}
       </header>
 
-      {saveMessage && (
-        <div className="rounded border p-3 text-sm">
-          {saveMessage}
-        </div>
-      )}
+      {saveMessage && <div className="rounded border p-3 text-sm">{saveMessage}</div>}
 
       {budget && (
         <BudgetWizardFromCatalog
           open={wizardOpen}
           onClose={() => setWizardOpen(false)}
           onAdd={(line) => {
-            setBudget((b) => (b ? addLine(b, line) : b));
+            setBudget((current) => (current ? addLine(current, line) : current));
           }}
         />
       )}
@@ -137,7 +146,9 @@ export default function NewBudgetPage() {
             <BudgetLinesPanel
               lines={budget.lines}
               onRemove={(id) =>
-                setBudget((b) => (b ? removeLine(b, id) : b))
+                setBudget((current) =>
+                  current ? removeLine(current, id) : current
+                )
               }
             />
           ) : (
@@ -147,14 +158,11 @@ export default function NewBudgetPage() {
           )}
         </div>
 
-        <aside className="rounded border p-4 space-y-4">
+        <aside className="space-y-4 rounded border p-4">
           <h2 className="font-semibold">Resumen</h2>
 
           {budget && (
-            <BudgetTotals
-              subtotal={budget.subtotal}
-              total={budget.total}
-            />
+            <BudgetTotals subtotal={budget.subtotal} total={budget.total} />
           )}
         </aside>
       </section>

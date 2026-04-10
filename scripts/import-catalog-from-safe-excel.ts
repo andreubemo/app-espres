@@ -13,7 +13,7 @@ const EXCEL_PATH =
 const SHEET_NAME = process.env.SHEET_NAME ?? "CATALOGO_IMPORT";
 const COMPANY_NAME = process.env.COMPANY_NAME ?? "Espres Carpintería";
 const DRY_RUN = process.env.DRY_RUN === "true";
-const REPLACE_ALL_MATERIALS = process.env.REPLACE_ALL_MATERIALS === "true";
+const REPLACE_ALL_CATALOG_ITEMS = process.env.REPLACE_ALL_CATALOG_ITEMS === "true";
 const CHUNK_SIZE = Number(process.env.CHUNK_SIZE ?? 200);
 
 type CatalogExcelRow = {
@@ -143,41 +143,6 @@ function chunkArray<T>(array: T[], size: number): T[][] {
   }
 
   return chunks;
-}
-
-function buildMaterialName(row: NormalizedCatalogRow): string {
-  const parts = [row.family, row.subfamily, row.material, row.itemName].filter(
-    Boolean
-  );
-
-  const fullName = parts.join(" | ").trim();
-  return fullName || row.itemName;
-}
-
-function buildMaterialDescription(row: NormalizedCatalogRow): string | null {
-  const lines: string[] = [];
-
-  lines.push(`item_name: ${row.itemName}`);
-  lines.push(`family: ${row.family}`);
-
-  if (row.subfamily) lines.push(`subfamily: ${row.subfamily}`);
-  if (row.material) lines.push(`material: ${row.material}`);
-  if (row.sectionTitle) lines.push(`section_title: ${row.sectionTitle}`);
-  lines.push(`family_key: ${row.familyKey}`);
-  lines.push(`item_key: ${row.itemKey}`);
-
-  if (row.measureUnit) lines.push(`measure_unit: ${row.measureUnit}`);
-  if (row.quantityLabel) lines.push(`quantity_label: ${row.quantityLabel}`);
-  if (row.priceLabel) lines.push(`price_label: ${row.priceLabel}`);
-  if (row.input1Label) lines.push(`input1_label: ${row.input1Label}`);
-  if (row.input2Label) lines.push(`input2_label: ${row.input2Label}`);
-  if (row.input3Label) lines.push(`input3_label: ${row.input3Label}`);
-  if (row.comments) lines.push(`comments: ${row.comments}`);
-
-  lines.push(`source_sheet: ${row.sourceSheet}`);
-  lines.push(`source_row: ${row.sourceRow}`);
-
-  return lines.length > 0 ? lines.join("\n") : null;
 }
 
 function readCatalogSheet(): NormalizedCatalogRow[] {
@@ -337,30 +302,51 @@ async function main() {
   const companyId = await resolveCompanyId();
 
   const dataToInsert = rows.map((row) => ({
-    name: buildMaterialName(row),
-    description: buildMaterialDescription(row),
-    unit: row.measureUnit ?? row.quantityLabel ?? "ud",
-    price: row.unitPriceBase,
     companyId,
+    sourceSheet: row.sourceSheet,
+    sourceRow: row.sourceRow,
+    sectionTitle: row.sectionTitle,
+    familyKey: row.familyKey,
+    itemKey: row.itemKey,
+    family: row.family,
+    subfamily: row.subfamily,
+    material: row.material,
+    itemName: row.itemName,
+    comments: row.comments,
+    input1Label: row.input1Label,
+    input2Label: row.input2Label,
+    input3Label: row.input3Label,
+    measureUnit: row.measureUnit,
+    quantityLabel: row.quantityLabel,
+    priceLabel: row.priceLabel,
+    unitPriceBase: row.unitPriceBase,
+    unitPriceRaw: row.unitPriceRaw,
+    measureCurrent: row.measureCurrent,
+    qtyCurrent: row.qtyCurrent,
+    realPriceCurrent: row.realPriceCurrent,
+    companyCostCurrent: row.companyCostCurrent,
+    markupCurrent: row.markupCurrent,
+    totalCurrent: row.totalCurrent,
+    isActive: true,
   }));
 
   console.log(`Archivo: ${EXCEL_PATH}`);
   console.log(`Hoja: ${SHEET_NAME}`);
   console.log(`Filas válidas detectadas: ${rows.length}`);
-  console.log(`Materiales preparados para insertar: ${dataToInsert.length}`);
+  console.log(`CatalogItem preparados para insertar: ${dataToInsert.length}`);
 
   if (DRY_RUN) {
     console.log("DRY_RUN=true -> no se escribe nada en la base de datos.");
-    console.log("Primeros 3 materiales preparados:");
+    console.log("Primeros 3 registros preparados:");
     console.dir(dataToInsert.slice(0, 3), { depth: null });
     return;
   }
 
-  if (!REPLACE_ALL_MATERIALS) {
+  if (!REPLACE_ALL_CATALOG_ITEMS) {
     throw new Error(
       [
         "Este script está protegido contra borrados accidentales.",
-        "Ejecuta con REPLACE_ALL_MATERIALS=true para reemplazar los materiales actuales.",
+        "Ejecuta con REPLACE_ALL_CATALOG_ITEMS=true para reemplazar el catálogo actual.",
       ].join(" ")
     );
   }
@@ -368,19 +354,19 @@ async function main() {
   const chunks = chunkArray(dataToInsert, CHUNK_SIZE);
 
   await prisma.$transaction(async (tx) => {
-    await tx.material.deleteMany({
+    await tx.catalogItem.deleteMany({
       where: { companyId },
     });
 
     for (const chunk of chunks) {
-      await tx.material.createMany({
+      await tx.catalogItem.createMany({
         data: chunk,
       });
     }
   });
 
   console.log(
-    `Importación completada. ${dataToInsert.length} materiales cargados en Prisma.`
+    `Importación completada. ${dataToInsert.length} catalogItems cargados en Prisma.`
   );
 }
 

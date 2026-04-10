@@ -1,5 +1,3 @@
-// prisma/schema.prisma
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -11,35 +9,36 @@ generator client {
 }
 
 model Company {
-  id        String    @id @default(cuid())
-  name      String
-  users     User[]
-  clients   Client[]
-  materials Material[]
-  budgets   Budget[]
-  createdAt DateTime  @default(now())
+  id           String        @id @default(cuid())
+  name         String
+  users        User[]
+  clients      Client[]
+  materials    Material[]
+  catalogItems CatalogItem[]
+  budgets      Budget[]
+  createdAt    DateTime      @default(now())
 }
 
 model User {
-  id             String    @id @default(cuid())
-  email          String    @unique
+  id             String   @id @default(cuid())
+  email          String   @unique
   password       String
   role           Role
-  company        Company   @relation(fields: [companyId], references: [id])
+  company        Company  @relation(fields: [companyId], references: [id])
   companyId      String
-  budgetsCreated Budget[]  @relation("CreatedBy")
-  createdAt      DateTime  @default(now())
+  budgetsCreated Budget[] @relation("CreatedBy")
+  createdAt      DateTime @default(now())
 }
 
 model Client {
-  id        String    @id @default(cuid())
+  id        String   @id @default(cuid())
   name      String
   email     String
   password  String
-  company   Company   @relation(fields: [companyId], references: [id])
+  company   Company  @relation(fields: [companyId], references: [id])
   companyId String
   budgets   Budget[]
-  createdAt DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([email, companyId])
 }
@@ -55,18 +54,55 @@ model Material {
   createdAt   DateTime @default(now())
 }
 
+model CatalogItem {
+  id                 String   @id @default(cuid())
+  company            Company  @relation(fields: [companyId], references: [id])
+  companyId          String
+  sourceSheet        String
+  sourceRow          Int
+  sectionTitle       String?
+  familyKey          String
+  itemKey            String
+  family             String
+  subfamily          String?
+  material           String?
+  itemName           String
+  comments           String?
+  input1Label        String?
+  input2Label        String?
+  input3Label        String?
+  measureUnit        String?
+  quantityLabel      String?
+  priceLabel         String?
+  unitPriceBase      Float
+  unitPriceRaw       Float?
+  measureCurrent     Float?
+  qtyCurrent         Float?
+  realPriceCurrent   Float?
+  companyCostCurrent Float?
+  markupCurrent      Float?
+  totalCurrent       Float?
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([companyId, itemKey])
+  @@index([companyId, family])
+  @@index([companyId, familyKey])
+}
+
 model Budget {
-  id          String        @id @default(cuid())
+  id          String          @id @default(cuid())
   reference   String
-  status      BudgetStatus  @default(DRAFT)
-  company     Company       @relation(fields: [companyId], references: [id])
+  status      BudgetStatus    @default(DRAFT)
+  company     Company         @relation(fields: [companyId], references: [id])
   companyId   String
-  client      Client        @relation(fields: [clientId], references: [id])
+  client      Client          @relation(fields: [clientId], references: [id])
   clientId    String
-  createdBy   User          @relation("CreatedBy", fields: [createdById], references: [id])
+  createdBy   User            @relation("CreatedBy", fields: [createdById], references: [id])
   createdById String
   versions    BudgetVersion[]
-  createdAt   DateTime      @default(now())
+  createdAt   DateTime        @default(now())
 }
 
 model BudgetVersion {

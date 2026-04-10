@@ -1,10 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
-type CatalogItem = {
+type CatalogItemResponse = {
   id: string;
+  familyKey?: string;
+  itemKey?: string;
   family: string;
-  material: string;
+  material?: string;
   item: string;
   unit: string;
   unitPrice: number;
@@ -12,27 +14,31 @@ type CatalogItem = {
 
 export async function GET() {
   try {
-    const materials = await prisma.material.findMany();
+    const catalogItems = await prisma.catalogItem.findMany({
+      where: {
+        isActive: true,
+      },
+      orderBy: [{ sourceSheet: "asc" }, { sourceRow: "asc" }],
+    });
 
-    const familiesMap = new Map<string, CatalogItem[]>();
+    const familiesMap = new Map<string, CatalogItemResponse[]>();
 
-    materials.forEach((m) => {
-      // ⚠️ IMPORTANTE: viene de "name | subfamily | material | item"
-      const parts = m.name.split("|").map((p) => p.trim());
-
-      const family = parts[0] || "Sin familia";
+    catalogItems.forEach((item) => {
+      const family = item.family?.trim() || "Sin familia";
 
       if (!familiesMap.has(family)) {
         familiesMap.set(family, []);
       }
 
       familiesMap.get(family)!.push({
-        id: m.id,
+        id: item.id,
+        familyKey: item.familyKey || undefined,
+        itemKey: item.itemKey || undefined,
         family,
-        material: parts[2] || "",
-        item: parts[3] || parts[1] || m.name,
-        unit: m.unit,
-        unitPrice: m.price,
+        material: item.material?.trim() || undefined,
+        item: item.itemName?.trim() || "Sin nombre",
+        unit: item.measureUnit?.trim() || item.quantityLabel?.trim() || "ud",
+        unitPrice: Number.isFinite(item.unitPriceBase) ? item.unitPriceBase : 0,
       });
     });
 

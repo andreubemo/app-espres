@@ -17,8 +17,12 @@ export type CreateEmptyBudgetInput = {
 };
 
 export type AddBudgetLineInput = {
+  catalogItemId: string;
+  familyKey?: string;
+  itemKey?: string;
   family: string;
   item: string;
+  material?: string;
   unit: string;
   quantity: number;
   unitPrice: number;
@@ -49,9 +53,7 @@ function calculateTotals(lines: BudgetLine[], complexity: BudgetComplexity) {
   return { subtotal, total };
 }
 
-export function createEmptyBudget(
-  data: CreateEmptyBudgetInput
-): Budget {
+export function createEmptyBudget(data: CreateEmptyBudgetInput): Budget {
   return {
     code: data.code.trim(),
     project: data.project.trim(),
@@ -64,10 +66,7 @@ export function createEmptyBudget(
   };
 }
 
-export function addLine(
-  budget: Budget,
-  input: AddBudgetLineInput
-): Budget {
+export function addLine(budget: Budget, input: AddBudgetLineInput): Budget {
   const manualQty = Number.isFinite(input.quantity) ? input.quantity : 0;
   const safeManualQty = Math.max(0, manualQty);
   const safeUnitPrice = Number.isFinite(input.unitPrice) ? input.unitPrice : 0;
@@ -88,8 +87,12 @@ export function addLine(
 
   const line: BudgetLine = {
     id: uuid(),
+    catalogItemId: input.catalogItemId,
+    familyKey: input.familyKey,
+    itemKey: input.itemKey,
     family: input.family,
     item: input.item,
+    material: input.material?.trim() || undefined,
     unit: input.unit,
     quantity: finalQuantity,
     unitPrice: round(safeUnitPrice),
