@@ -2,10 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Modal from "../common/Modal";
-import {
-  getCatalogFamilies,
-  getItemsByFamily,
-} from "@/domain/catalog/catalog.service";
 
 type WizardItem = {
   id: string;
@@ -14,6 +10,11 @@ type WizardItem = {
   item: string;
   unit: string;
   unitPrice: number;
+};
+
+type CatalogApiResponse = {
+  families: string[];
+  itemsByFamily: Record<string, WizardItem[]>;
 };
 
 export default function BudgetWizardFromCatalog({
@@ -31,7 +32,12 @@ export default function BudgetWizardFromCatalog({
   }) => void;
   onClose: () => void;
 }) {
-  const families = useMemo(() => getCatalogFamilies(), []);
+  const [families, setFamilies] = useState<string[]>([]);
+  const [itemsByFamily, setItemsByFamily] = useState<
+    Record<string, WizardItem[]>
+  >({});
+  const [loadingCatalog, setLoadingCatalog] = useState(false);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
 
   const [step, setStep] = useState(0);
   const [selectedItem, setSelectedItem] = useState<WizardItem | null>(null);
@@ -45,12 +51,62 @@ export default function BudgetWizardFromCatalog({
     }
   }, [open]);
 
-  if (!open) return null;
+  useEffect(() => {
+    let ignore = false;
 
-  const familyKey = families[step];
-  const items = familyKey ? (getItemsByFamily(familyKey) as WizardItem[]) : [];
+    async function loadCatalog() {
+      setLoadingCatalog(true);
+      setCatalogError(null);
+
+      try {
+        const response = await fetch("/api/catalog", {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error HTTP ${response.status}`);
+        }
+
+        const data = (await response.json()) as CatalogApiResponse;
+
+        if (ignore) return;
+
+        setFamilies(Array.isArray(data.families) ? data.families : []);
+        setItemsByFamily(
+          data.itemsByFamily && typeof data.itemsByFamily === "object"
+            ? data.itemsByFamily
+            : {}
+        );
+      } catch (error) {
+        if (ignore) return;
+
+        console.error("Error cargando catálogo:", error);
+        setCatalogError("No se ha podido cargar el catálogo.");
+        setFamilies([]);
+        setItemsByFamily({});
+      } finally {
+        if (!ignore) {
+          setLoadingCatalog(false);
+        }
+      }
+    }
+
+    loadCatalog();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
   const totalFamilies = families.length;
-  const isLastStep = step >= totalFamilies - 1;
+  const familyKey = families[step] ?? null;
+  const items = useMemo<WizardItem[]>(() => {
+    if (!familyKey) return [];
+    return itemsByFamily[familyKey] ?? [];
+  }, [familyKey, itemsByFamily]);
+
+  const isLastStep = totalFamilies === 0 || step >= totalFamilies - 1;
   const canGoBack = step > 0;
 
   function resetItemState() {
@@ -108,14 +164,33 @@ export default function BudgetWizardFromCatalog({
       <div className="space-y-4">
         <div className="border-b pb-3">
           <p className="text-sm text-gray-500">
-            Familia {step + 1} de {totalFamilies}
+            {totalFamilies > 0
+              ? `Familia ${step + 1} de ${totalFamilies}`
+              : "Sin familias disponibles"}
           </p>
+
           <h3 className="font-semibold capitalize">
             {familyKey?.replace(/_/g, " ") || "Sin familia"}
           </h3>
         </div>
 
-        {!selectedItem && (
+        {loadingCatalog && (
+          <p className="text-sm text-gray-500">Cargando catálogo...</p>
+        )}
+
+        {!loadingCatalog && catalogError && (
+          <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {catalogError}
+          </div>
+        )}
+
+        {!loadingCatalog && !catalogError && totalFamilies === 0 && (
+          <p className="text-sm text-gray-500">
+            No hay familias disponibles en el catálogo.
+          </p>
+        )}
+
+        {!loadingCatalog && !catalogError && totalFamilies > 0 && !selectedItem && (
           <div className="space-y-3">
             {items.length === 0 ? (
               <p className="text-sm text-gray-500">
@@ -131,6 +206,11 @@ export default function BudgetWizardFromCatalog({
                     onClick={() => handleSelectItem(it)}
                   >
                     <div className="font-medium">{it.item}</div>
+
+                    {it.material && (
+                      <div className="text-sm text-gray-500">{it.material}</div>
+                    )}
+
                     <div className="text-sm text-gray-600">
                       {it.unitPrice} € / {it.unit}
                     </div>
@@ -160,10 +240,15 @@ export default function BudgetWizardFromCatalog({
           </div>
         )}
 
-        {selectedItem && (
+        {!loadingCatalog && !catalogError && selectedItem && (
           <div className="space-y-4">
             <div>
               <h4 className="font-semibold">{selectedItem.item}</h4>
+
+              {selectedItem.material && (
+                <p className="text-sm text-gray-500">{selectedItem.material}</p>
+              )}
+
               <p className="text-sm text-gray-600">
                 Precio: {selectedItem.unitPrice} € / {selectedItem.unit}
               </p>

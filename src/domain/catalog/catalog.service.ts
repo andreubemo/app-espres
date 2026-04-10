@@ -1,21 +1,40 @@
-import catalogData from "../../data/catalog.json";
-import pricesData from "../../data/prices.json";
-import { Catalog, CatalogItem, Prices } from "./catalog.model";
+import { prisma } from "@/lib/prisma";
 
-export function getCatalogFamilies(): string[] {
-  return Object.keys(catalogData as Catalog);
+export async function getCatalogFamilies() {
+  const materials = await prisma.material.findMany({
+    select: {
+      name: true,
+    },
+  });
+
+  // extraemos la "familia" desde el nombre
+  const families = new Set<string>();
+
+  materials.forEach((m) => {
+    const parts = m.name.split("|");
+    if (parts.length > 0) {
+      families.add(parts[0].trim());
+    }
+  });
+
+  return Array.from(families);
 }
 
-export function getItemsByFamily(
-  family: string
-): (CatalogItem & { unitPrice: number })[] {
-  const catalog = catalogData as Catalog;
-  const prices = pricesData as Prices;
+export async function getItemsByFamily(family: string) {
+  const materials = await prisma.material.findMany();
 
-  const items = catalog[family] || [];
+  return materials
+    .filter((m) => m.name.startsWith(family))
+    .map((m) => {
+      const parts = m.name.split("|").map((p) => p.trim());
 
-  return items.map((item) => ({
-    ...item,
-    unitPrice: prices[item.id]?.default ?? 0,
-  }));
+      return {
+        id: m.id,
+        family: parts[0] || family,
+        material: parts[2] || "",
+        item: parts[3] || m.name,
+        unit: m.unit,
+        unitPrice: m.price,
+      };
+    });
 }
