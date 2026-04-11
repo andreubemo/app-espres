@@ -1,57 +1,123 @@
-import { Budget, BudgetLine, BudgetComplexity } from "./budget.model";
 import { v4 as uuid } from "uuid";
+import { Budget, BudgetLine, BudgetComplexity } from "./budget.model";
+import {
+  COMPLEXITY_FACTOR,
+  getMinimumByFamily,
+  getQuantityByUnit,
+  round,
+} from "../rules/pricing.rules";
 
-const COMPLEXITY_FACTOR: Record<BudgetComplexity, number> = {
-  low: 1,
-  medium: 1.15,
-  high: 1.3,
-};
-
-export function createEmptyBudget(data: {
+export type CreateEmptyBudgetInput = {
   code: string;
   project: string;
   date: string;
-  surfaceM2: number;
   complexity: BudgetComplexity;
-}): Budget {
+  width: number;
+  length: number;
+};
+
+export type AddBudgetLineInput = {
+  catalogItemId: string;
+  familyKey?: string;
+  itemKey?: string;
+  family: string;
+  item: string;
+  material?: string;
+  unit: string;
+  quantity: number;
+  unitPrice: number;
+};
+
+function calculateDimensions(width: number, length: number) {
+  const safeWidth = Number.isFinite(width) ? width : 0;
+  const safeLength = Number.isFinite(length) ? length : 0;
+
+  const normalizedWidth = Math.max(0, safeWidth);
+  const normalizedLength = Math.max(0, safeLength);
+
+  const surfaceM2 = round(normalizedWidth * normalizedLength);
+  const perimeterML = round((normalizedWidth + normalizedLength) * 2);
+
   return {
-    code: data.code,
-    project: data.project,
+    width: normalizedWidth,
+    length: normalizedLength,
+    surfaceM2,
+    perimeterML,
+  };
+}
+
+function calculateTotals(lines: BudgetLine[], complexity: BudgetComplexity) {
+  const subtotal = round(lines.reduce((sum, line) => sum + line.total, 0));
+  const total = round(subtotal * COMPLEXITY_FACTOR[complexity]);
+
+  return { subtotal, total };
+}
+
+export function createEmptyBudget(data: CreateEmptyBudgetInput): Budget {
+  return {
+    code: data.code.trim(),
+    project: data.project.trim(),
     date: data.date,
     complexity: data.complexity,
-    dimensions: {
-      width: 0,
-      length: 0,
-      surfaceM2: data.surfaceM2,
-      perimeterML: 0,
-    },
+    dimensions: calculateDimensions(data.width, data.length),
     lines: [],
     subtotal: 0,
     total: 0,
   };
 }
 
-export function addLine(
-  budget: Budget,
-  line: Omit<BudgetLine, "id" | "total">
-): Budget {
-  const newLine: BudgetLine = {
-    ...line,
+export function addLine(budget: Budget, input: AddBudgetLineInput): Budget {
+  const manualQty = Number.isFinite(input.quantity) ? input.quantity : 0;
+  const safeManualQty = Math.max(0, manualQty);
+  const safeUnitPrice = Number.isFinite(input.unitPrice) ? input.unitPrice : 0;
+
+  const calculatedQty = getQuantityByUnit(
+    input.unit,
+    {
+      surfaceM2: budget.dimensions.surfaceM2,
+      perimeterML: budget.dimensions.perimeterML,
+    },
+    safeManualQty
+  );
+
+  const minimum = getMinimumByFamily(input.family);
+  const finalQuantity = round(
+    minimum ? Math.max(calculatedQty, minimum) : calculatedQty
+  );
+
+  const line: BudgetLine = {
     id: uuid(),
-    total: line.quantity * line.unitPrice,
+    catalogItemId: input.catalogItemId,
+    familyKey: input.familyKey,
+    itemKey: input.itemKey,
+    family: input.family,
+    item: input.item,
+    material: input.material?.trim() || undefined,
+    unit: input.unit,
+    quantity: finalQuantity,
+    unitPrice: round(safeUnitPrice),
+    total: round(finalQuantity * safeUnitPrice),
   };
 
-  const lines = [...budget.lines, newLine];
-  const subtotal = lines.reduce((s, l) => s + l.total, 0);
-  const total = subtotal * COMPLEXITY_FACTOR[budget.complexity];
+  const lines = [...budget.lines, line];
+  const { subtotal, total } = calculateTotals(lines, budget.complexity);
 
-  return { ...budget, lines, subtotal, total };
+  return {
+    ...budget,
+    lines,
+    subtotal,
+    total,
+  };
 }
 
 export function removeLine(budget: Budget, id: string): Budget {
-  const lines = budget.lines.filter((l) => l.id !== id);
-  const subtotal = lines.reduce((s, l) => s + l.total, 0);
-  const total = subtotal * COMPLEXITY_FACTOR[budget.complexity];
+  const lines = budget.lines.filter((line) => line.id !== id);
+  const { subtotal, total } = calculateTotals(lines, budget.complexity);
 
-  return { ...budget, lines, subtotal, total };
+  return {
+    ...budget,
+    lines,
+    subtotal,
+    total,
+  };
 }
