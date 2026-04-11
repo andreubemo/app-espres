@@ -138,6 +138,7 @@ export default function NewBudgetPage() {
         />
       )}
 
+      {/* CUERPO */}
       <section className="grid grid-cols-3 gap-6">
         <div className="col-span-2 rounded border p-4">
           <h2 className="mb-3 font-semibold">Partidas</h2>

@@ -19,6 +19,15 @@ type CatalogApiResponse = {
   itemsByFamily: Record<string, WizardItem[]>;
 };
 
+type WizardItem = {
+  id: string;
+  family: string;
+  material: string;
+  item: string;
+  unit: string;
+  unitPrice: number;
+};
+
 export default function BudgetWizardFromCatalog({
   open,
   onAdd,

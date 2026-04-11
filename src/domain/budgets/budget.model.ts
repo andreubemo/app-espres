@@ -1,4 +1,4 @@
-export type BudgetComplexity = "low" | "medium" | "high";
+export type BudgetComplexity = 'low' | 'medium' | 'high';
 
 /**
  * Línea de presupuesto enriquecida:
