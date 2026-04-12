@@ -44,6 +44,13 @@ type StoredBudgetData = {
   total?: number;
 };
 
+type PageProps = {
+  searchParams?: Promise<{
+    q?: string;
+    status?: string;
+  }>;
+};
+
 function formatCurrency(value?: number) {
   const safeValue = Number.isFinite(value) ? Number(value) : 0;
 
@@ -146,20 +153,29 @@ function getBudgetTotals(data: StoredBudgetData) {
       ? data.subtotal
       : lines.reduce((acc, line) => acc + getLineTotal(line), 0);
 
-  const total =
-    typeof data.total === "number"
-      ? data.total
-      : subtotal;
+  const total = typeof data.total === "number" ? data.total : subtotal;
 
   return { subtotal, total, lines };
 }
 
-export default async function BudgetsPage() {
+function matchesSearch(value: string, query: string) {
+  return value.toLowerCase().includes(query.toLowerCase());
+}
+
+export default async function BudgetsPage({ searchParams }: PageProps) {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user?.id || !session.user.companyId || session.user.type !== "USER") {
+  if (
+    !session?.user?.id ||
+    !session.user.companyId ||
+    session.user.type !== "USER"
+  ) {
     redirect("/login");
   }
+
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const q = resolvedSearchParams?.q?.trim() || "";
+  const status = resolvedSearchParams?.status?.trim() || "";
 
   const budgets = await prisma.budget.findMany({
     where: {
@@ -176,6 +192,31 @@ export default async function BudgetsPage() {
       createdAt: "desc",
     },
   });
+
+  const filteredBudgets = budgets.filter((budget) => {
+    const latestVersion = budget.versions[0];
+    const data = (latestVersion?.data ?? {}) as StoredBudgetData;
+
+    const codeLabel = data.code?.trim() || budget.reference || "";
+    const projectLabel = data.project?.trim() || "";
+    const clientLabel =
+      budget.client.email === "pendiente@espres.local"
+        ? "Cliente pendiente"
+        : budget.client.name;
+
+    const matchesStatus = !status || budget.status === status;
+
+    const matchesQuery =
+      !q ||
+      matchesSearch(codeLabel, q) ||
+      matchesSearch(projectLabel, q) ||
+      matchesSearch(clientLabel, q) ||
+      matchesSearch(budget.reference, q);
+
+    return matchesStatus && matchesQuery;
+  });
+
+  const hasActiveFilters = Boolean(q || status);
 
   return (
     <main className="min-h-screen bg-neutral-50">
@@ -204,21 +245,101 @@ export default async function BudgetsPage() {
           </Link>
         </header>
 
-        {budgets.length === 0 ? (
+        <section className="rounded-2xl border border-neutral-200 bg-white shadow-sm">
+          <div className="space-y-4 p-6">
+            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-neutral-900">
+                  Buscar y filtrar
+                </h2>
+                <p className="text-sm text-neutral-500">
+                  Busca por código, proyecto, cliente o referencia.
+                </p>
+              </div>
+
+              <div className="text-sm text-neutral-500">
+                {filteredBudgets.length}{" "}
+                {filteredBudgets.length === 1
+                  ? "resultado"
+                  : "resultados"}
+              </div>
+            </div>
+
+            <form
+              method="GET"
+              className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px_auto]"
+            >
+              <label className="space-y-1.5">
+                <span className="text-sm font-medium text-neutral-700">
+                  Buscar
+                </span>
+                <input
+                  type="text"
+                  name="q"
+                  defaultValue={q}
+                  placeholder="Ej. roble, cliente, referencia..."
+                  className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-neutral-900 outline-none transition focus:border-neutral-400"
+                />
+              </label>
+
+              <label className="space-y-1.5">
+                <span className="text-sm font-medium text-neutral-700">
+                  Estado
+                </span>
+                <select
+                  name="status"
+                  defaultValue={status}
+                  className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-neutral-900 outline-none transition focus:border-neutral-400"
+                >
+                  <option value="">Todos</option>
+                  <option value="DRAFT">Borrador</option>
+                  <option value="SENT">Enviado</option>
+                  <option value="ACCEPTED">Aceptado</option>
+                  <option value="REJECTED">Rechazado</option>
+                  <option value="CANCELLED">Cancelado</option>
+                </select>
+              </label>
+
+              <div className="flex items-end gap-3">
+                <button
+                  type="submit"
+                  className="inline-flex w-full items-center justify-center rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-800 lg:w-auto"
+                >
+                  Aplicar filtros
+                </button>
+
+                {hasActiveFilters && (
+                  <Link
+                    href="/budgets"
+                    className="inline-flex w-full items-center justify-center rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-800 transition hover:bg-neutral-100 lg:w-auto"
+                  >
+                    Limpiar
+                  </Link>
+                )}
+              </div>
+            </form>
+          </div>
+        </section>
+
+        {filteredBudgets.length === 0 ? (
           <section className="rounded-2xl border border-dashed border-neutral-300 bg-white p-8 text-center shadow-sm">
             <div className="mx-auto max-w-md space-y-2">
               <h2 className="text-lg font-semibold text-neutral-900">
-                No hay presupuestos todavía
+                {hasActiveFilters
+                  ? "No se han encontrado presupuestos"
+                  : "No hay presupuestos todavía"}
               </h2>
+
               <p className="text-sm text-neutral-500">
-                Cuando guardes tu primer presupuesto aparecerá aquí con su total,
-                cliente, estado y acceso directo al detalle.
+                {hasActiveFilters
+                  ? "Prueba a cambiar la búsqueda o limpiar los filtros actuales."
+                  : "Cuando guardes tu primer presupuesto aparecerá aquí con su total, cliente, estado y acceso directo al detalle."}
               </p>
             </div>
           </section>
         ) : (
           <section className="space-y-4">
-            {budgets.map((budget) => {
+            {filteredBudgets.map((budget) => {
               const latestVersion = budget.versions[0];
               const data = (latestVersion?.data ?? {}) as StoredBudgetData;
               const { total, lines } = getBudgetTotals(data);

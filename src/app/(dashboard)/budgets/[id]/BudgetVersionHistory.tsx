@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { restoreBudgetVersionAsLatest } from "@/app/actions/budgets";
 
@@ -14,6 +14,7 @@ type BudgetVersionHistoryItem = {
   lineCount: number;
   total: number;
   isCurrent: boolean;
+  isViewed?: boolean;
 };
 
 type BudgetVersionHistoryProps = {
@@ -66,6 +67,7 @@ export default function BudgetVersionHistory({
   versions,
 }: BudgetVersionHistoryProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
   function handleRestore(versionId: string) {
@@ -79,12 +81,27 @@ export default function BudgetVersionHistory({
     });
   }
 
+  function handleViewVersion(versionNumber: number) {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (versionNumber === versions.find((version) => version.isCurrent)?.version) {
+      params.delete("viewVersion");
+    } else {
+      params.set("viewVersion", String(versionNumber));
+    }
+
+    router.push(`/budgets/${budgetId}?${params.toString()}`);
+  }
+
   return (
     <div className="rounded-2xl border border-neutral-200 bg-white shadow-sm">
       <div className="border-b border-neutral-200 px-6 py-4">
         <h2 className="text-lg font-semibold text-neutral-900">
           Historial de versiones
         </h2>
+        <p className="mt-1 text-sm text-neutral-500">
+          Consulta versiones anteriores o restaura una versión como nueva.
+        </p>
       </div>
 
       <div className="p-6">
@@ -96,6 +113,7 @@ export default function BudgetVersionHistory({
           <div className="space-y-3">
             {versions.map((version) => {
               const canRestore = !version.isCurrent && !isPending;
+              const isViewed = Boolean(version.isViewed);
 
               return (
                 <article
@@ -125,6 +143,12 @@ export default function BudgetVersionHistory({
                             Enviada
                           </span>
                         )}
+
+                        {isViewed && !version.isCurrent && (
+                          <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+                            Visualizada
+                          </span>
+                        )}
                       </div>
 
                       <div className="text-sm text-neutral-600">
@@ -143,7 +167,7 @@ export default function BudgetVersionHistory({
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-3 lg:min-w-[280px]">
+                    <div className="flex flex-col gap-3 lg:min-w-[320px]">
                       <div className="grid gap-2 sm:grid-cols-2">
                         <div className="rounded-lg border border-neutral-200 bg-white p-3">
                           <p className="text-xs uppercase tracking-wide text-neutral-500">
@@ -164,18 +188,33 @@ export default function BudgetVersionHistory({
                         </div>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => handleRestore(version.id)}
-                        disabled={!canRestore}
-                        className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-800 transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:border-neutral-200 disabled:bg-neutral-100 disabled:text-neutral-400"
-                      >
-                        {version.isCurrent
-                          ? "Versión actual"
-                          : isPending
-                          ? "Restaurando..."
-                          : "Restaurar como nueva versión"}
-                      </button>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <button
+                          type="button"
+                          onClick={() => handleViewVersion(version.version)}
+                          disabled={isPending}
+                          className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-800 transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:border-neutral-200 disabled:bg-neutral-100 disabled:text-neutral-400"
+                        >
+                          {version.isCurrent
+                            ? "Ver versión actual"
+                            : isViewed
+                            ? "Versión visualizada"
+                            : "Ver esta versión"}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRestore(version.id)}
+                          disabled={!canRestore}
+                          className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-800 transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:border-neutral-200 disabled:bg-neutral-100 disabled:text-neutral-400"
+                        >
+                          {version.isCurrent
+                            ? "Versión actual"
+                            : isPending
+                            ? "Restaurando..."
+                            : "Restaurar como nueva"}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </article>
