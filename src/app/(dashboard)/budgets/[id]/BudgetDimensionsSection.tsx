@@ -45,11 +45,11 @@ export default function BudgetDimensionsSection({
           </p>
         </div>
 
-        <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+        <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4 sm:col-span-2 xl:col-span-1">
           <p className="text-xs uppercase tracking-wide text-neutral-500">
             Superficie
           </p>
-          <p className="mt-1 text-sm font-semibold text-neutral-900">
+          <p className="mt-1 text-xl font-semibold tracking-tight text-neutral-900">
             {formatNumber(surfaceM2)} m²
           </p>
         </div>

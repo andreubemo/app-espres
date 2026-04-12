@@ -19,7 +19,7 @@ export function Pagination({
 
   return (
     <div className="flex items-center justify-between gap-4 py-4 text-sm">
-      <span className="text-[var(--color-muted)]">
+      <span className="text-(--color-muted)">
         Página {page} de {totalPages} · {total} resultado(s)
       </span>
 
@@ -27,14 +27,14 @@ export function Pagination({
         <button
           disabled={!canPrev}
           onClick={() => onPageChange(page - 1)}
-          className="rounded-md border border-[var(--color-border)] px-3 py-1 disabled:opacity-50"
+          className="rounded-md border border-(--color-border) px-3 py-1 disabled:opacity-50"
         >
           Anterior
         </button>
         <button
           disabled={!canNext}
           onClick={() => onPageChange(page + 1)}
-          className="rounded-md border border-[var(--color-border)] px-3 py-1 disabled:opacity-50"
+          className="rounded-md border border-(--color-border) px-3 py-1 disabled:opacity-50"
         >
           Siguiente
         </button>

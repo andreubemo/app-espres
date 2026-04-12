@@ -8,7 +8,7 @@ export function Select({ className, ...props }: SelectProps) {
   return (
     <select
       className={cn(
-        "h-9 rounded-md border border-[var(--color-border)] bg-white px-3 text-sm",
+        "h-9 rounded-md border border-(--color-border) bg-white px-3 text-sm",
         "focus:outline-none focus:ring-2 focus:ring-black",
         className
       )}

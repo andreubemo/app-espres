@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Modal from "../common/Modal";
 
 type WizardItem = {
@@ -19,20 +19,7 @@ type CatalogApiResponse = {
   itemsByFamily: Record<string, WizardItem[]>;
 };
 
-type WizardItem = {
-  id: string;
-  family: string;
-  material: string;
-  item: string;
-  unit: string;
-  unitPrice: number;
-};
-
-export default function BudgetWizardFromCatalog({
-  open,
-  onAdd,
-  onClose,
-}: {
+type BudgetWizardFromCatalogProps = {
   open: boolean;
   onAdd: (line: {
     catalogItemId: string;
@@ -46,7 +33,28 @@ export default function BudgetWizardFromCatalog({
     unitPrice: number;
   }) => void;
   onClose: () => void;
-}) {
+};
+
+function formatCurrency(value?: number) {
+  const safeValue = Number.isFinite(value) ? Number(value) : 0;
+
+  return new Intl.NumberFormat("es-ES", {
+    style: "currency",
+    currency: "EUR",
+  }).format(safeValue);
+}
+
+function formatFamilyLabel(value?: string) {
+  if (!value) return "Sin familia";
+
+  return value.replace(/_/g, " ").replace(/\s+/g, " ").trim();
+}
+
+export default function BudgetWizardFromCatalog({
+  open,
+  onAdd,
+  onClose,
+}: BudgetWizardFromCatalogProps) {
   const [families, setFamilies] = useState<string[]>([]);
   const [itemsByFamily, setItemsByFamily] = useState<
     Record<string, WizardItem[]>
@@ -59,16 +67,9 @@ export default function BudgetWizardFromCatalog({
     {}
   );
   const [quantities, setQuantities] = useState<Record<string, number>>({});
-
-  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
-
-  useEffect(() => {
-    if (!open) {
-      setStep(0);
-      setSelectedItems({});
-      setQuantities({});
-    }
-  }, [open]);
+  const [completedFamilies, setCompletedFamilies] = useState<
+    Record<string, boolean>
+  >({});
 
   useEffect(() => {
     let cancelled = false;
@@ -78,16 +79,16 @@ export default function BudgetWizardFromCatalog({
       setCatalogError(null);
 
       try {
-        const response = await fetch("/api/catalog", {
+        const res = await fetch("/api/catalog", {
           method: "GET",
           cache: "no-store",
         });
 
-        if (!response.ok) {
-          throw new Error(`Error HTTP ${response.status}`);
+        if (!res.ok) {
+          throw new Error(`Error HTTP ${res.status}`);
         }
 
-        const data = (await response.json()) as CatalogApiResponse;
+        const data = (await res.json()) as CatalogApiResponse;
 
         if (cancelled) return;
 
@@ -121,7 +122,7 @@ export default function BudgetWizardFromCatalog({
   const totalFamilies = families.length;
   const currentFamily = families[step] ?? null;
 
-  const items = useMemo<WizardItem[]>(() => {
+  const items = useMemo(() => {
     if (!currentFamily) return [];
     return itemsByFamily[currentFamily] ?? [];
   }, [currentFamily, itemsByFamily]);
@@ -138,35 +139,51 @@ export default function BudgetWizardFromCatalog({
     }, 0);
   }, [selectedList, quantities]);
 
-  const canGoBack = step > 0;
-  const isLastStep = totalFamilies === 0 || step >= totalFamilies - 1;
-  const canConfirm = selectedList.length > 0;
+  function resetWizardState() {
+    setStep(0);
+    setSelectedItems({});
+    setQuantities({});
+    setCompletedFamilies({});
+  }
 
-  function resetSelection() {
+  function handleClose() {
+    resetWizardState();
+    onClose();
+  }
+
+  function goToStep(index: number) {
+    setStep(index);
     setSelectedItems({});
     setQuantities({});
   }
 
   function goNextFamily() {
-    if (isLastStep) {
-      onClose();
+    if (currentFamily && selectedList.length > 0) {
+      setCompletedFamilies((prev) => ({
+        ...prev,
+        [currentFamily]: true,
+      }));
+    }
+
+    if (step < families.length - 1) {
+      goToStep(step + 1);
       return;
     }
 
-    resetSelection();
-    setStep((current) => current + 1);
+    handleClose();
   }
 
   function goPrevFamily() {
-    resetSelection();
-    setStep((current) => Math.max(current - 1, 0));
+    if (step > 0) {
+      goToStep(step - 1);
+    }
   }
 
-  function toggleItemSelection(item: WizardItem) {
-    const isAlreadySelected = Boolean(selectedItems[item.id]);
+  function toggleItem(item: WizardItem) {
+    const isSelected = Boolean(selectedItems[item.id]);
 
-    setSelectedItems((current) => {
-      const next = { ...current };
+    setSelectedItems((prev) => {
+      const next = { ...prev };
 
       if (next[item.id]) {
         delete next[item.id];
@@ -177,56 +194,30 @@ export default function BudgetWizardFromCatalog({
       return next;
     });
 
-    setQuantities((current) => {
-      if (isAlreadySelected) {
-        const next = { ...current };
+    setQuantities((prev) => {
+      if (isSelected) {
+        const next = { ...prev };
         delete next[item.id];
         return next;
       }
 
       return {
-        ...current,
-        [item.id]: current[item.id] ?? 1,
+        ...prev,
+        [item.id]: prev[item.id] ?? 1,
       };
-    });
-
-    if (!isAlreadySelected) {
-      setTimeout(() => {
-        const input = inputRefs.current[item.id];
-        if (input) {
-          input.focus();
-          input.select();
-        }
-      }, 0);
-    }
-  }
-
-  function removeSelectedItem(itemId: string) {
-    setSelectedItems((current) => {
-      const next = { ...current };
-      delete next[itemId];
-      return next;
-    });
-
-    setQuantities((current) => {
-      const next = { ...current };
-      delete next[itemId];
-      return next;
     });
   }
 
   function handleChangeQuantity(itemId: string, value: string) {
     const parsed = Number(value);
 
-    setQuantities((current) => ({
-      ...current,
+    setQuantities((prev) => ({
+      ...prev,
       [itemId]: Number.isFinite(parsed) && parsed > 0 ? parsed : 1,
     }));
   }
 
-  function confirmAddSelected() {
-    if (!canConfirm) return;
-
+  function confirm() {
     selectedList.forEach((item) => {
       onAdd({
         catalogItemId: item.id,
@@ -247,256 +238,225 @@ export default function BudgetWizardFromCatalog({
   if (!open) return null;
 
   return (
-    <Modal open={open} title="Añadir partidas" onClose={onClose}>
-      <div className="flex max-h-[78vh] flex-col">
-        <div className="border-b pb-3">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-sm text-gray-500">
-                {totalFamilies > 0
-                  ? `Familia ${step + 1} de ${totalFamilies}`
-                  : "Sin familias disponibles"}
-              </p>
+    <Modal open={open} title="Selector de partidas" onClose={handleClose}>
+      <div className="flex flex-col gap-4">
+        <div className="overflow-x-auto">
+          <div className="flex gap-2">
+            {families.map((fam, index) => {
+              const isActive = index === step;
+              const isDone = completedFamilies[fam];
 
-              <h3 className="font-semibold capitalize">
-                {currentFamily?.replace(/_/g, " ") || "Sin familia"}
-              </h3>
-            </div>
-
-            <div className="text-right text-sm text-gray-500">
-              <div>{selectedList.length} seleccionadas</div>
-              <div>{subtotal.toFixed(2)} € subtotal</div>
-            </div>
+              return (
+                <button
+                  key={fam}
+                  type="button"
+                  onClick={() => goToStep(index)}
+                  className={[
+                    "shrink-0 rounded-xl px-4 py-2 text-sm font-medium transition",
+                    isActive
+                      ? "bg-black text-white"
+                      : isDone
+                      ? "bg-green-100 text-green-700"
+                      : "bg-neutral-100 text-neutral-600",
+                  ].join(" ")}
+                >
+                  {formatFamilyLabel(fam)}
+                </button>
+              );
+            })}
           </div>
         </div>
 
+        <div className="flex items-center justify-between text-sm text-neutral-500">
+          <span>
+            {totalFamilies > 0
+              ? `Familia ${step + 1} de ${totalFamilies}`
+              : "Sin familias"}
+          </span>
+          <span>{formatCurrency(subtotal)}</span>
+        </div>
+
         {loadingCatalog && (
-          <div className="py-6">
-            <p className="text-sm text-gray-500">Cargando catálogo...</p>
+          <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4 text-sm text-neutral-600">
+            Cargando catálogo...
           </div>
         )}
 
         {!loadingCatalog && catalogError && (
-          <div className="py-6">
-            <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              {catalogError}
-            </div>
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            {catalogError}
           </div>
         )}
 
         {!loadingCatalog && !catalogError && totalFamilies === 0 && (
-          <div className="py-6">
-            <p className="text-sm text-gray-500">
-              No hay familias disponibles en el catálogo.
-            </p>
+          <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-600">
+            No hay familias disponibles en el catálogo.
           </div>
         )}
 
         {!loadingCatalog && !catalogError && totalFamilies > 0 && (
-          <div className="grid min-h-0 flex-1 gap-4 pt-4 md:grid-cols-[1.5fr_1fr]">
-            <div className="min-h-0 rounded border">
-              <div className="border-b bg-gray-50 px-3 py-2 text-sm font-medium">
-                Opciones de la familia
-              </div>
-
-              <div className="max-h-[48vh] overflow-y-auto p-3">
+          <>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
                 {items.length === 0 ? (
-                  <p className="text-sm text-gray-500">
+                  <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-600">
                     No hay partidas en esta familia.
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {items.map((it) => {
-                      const isSelected = Boolean(selectedItems[it.id]);
-
-                      return (
-                        <button
-                          key={it.id}
-                          type="button"
-                          onClick={() => toggleItemSelection(it)}
-                          className={`w-full rounded border p-3 text-left transition ${
-                            isSelected
-                              ? "border-black bg-gray-100"
-                              : "border-gray-200 hover:bg-gray-50"
-                          }`}
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="font-medium">{it.item}</div>
-
-                              {it.material && (
-                                <div className="text-sm text-gray-500">
-                                  {it.material}
-                                </div>
-                              )}
-
-                              <div className="mt-1 text-sm text-gray-600">
-                                {it.unitPrice} € / {it.unit}
-                              </div>
-                            </div>
-
-                            <div
-                              className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border text-xs ${
-                                isSelected
-                                  ? "border-black bg-black text-white"
-                                  : "border-gray-300 bg-white text-transparent"
-                              }`}
-                            >
-                              ✓
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
                   </div>
+                ) : (
+                  items.map((item) => {
+                    const selected = selectedItems[item.id];
+
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => toggleItem(item)}
+                        className={`w-full rounded border p-3 text-left transition ${
+                          selected
+                            ? "border-neutral-900 bg-neutral-200"
+                            : "border-neutral-200 bg-white hover:bg-neutral-50"
+                        }`}
+                      >
+                        <div className="font-medium text-neutral-900">
+                          {item.item}
+                        </div>
+
+                        {item.material ? (
+                          <div className="mt-1 text-sm text-neutral-600">
+                            {item.material}
+                          </div>
+                        ) : null}
+
+                        <div className="mt-1 text-sm text-neutral-500">
+                          {formatCurrency(item.unitPrice)} / {item.unit}
+                        </div>
+                      </button>
+                    );
+                  })
                 )}
               </div>
-            </div>
 
-            <div className="min-h-0 rounded border">
-              <div className="border-b bg-gray-50 px-3 py-2 text-sm font-medium">
-                Selección actual
-              </div>
-
-              <div className="max-h-[48vh] overflow-y-auto p-3">
+              <div className="space-y-2">
                 {selectedList.length === 0 ? (
-                  <p className="text-sm text-gray-500">
+                  <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-4 text-sm text-neutral-600">
                     Selecciona una o varias partidas de esta familia.
-                  </p>
+                  </div>
                 ) : (
-                  <div className="space-y-3">
-                    {selectedList.map((item) => {
-                      const qty = quantities[item.id] ?? 1;
-                      const lineTotal = qty * item.unitPrice;
+                  selectedList.map((item) => {
+                    const qty = quantities[item.id] ?? 1;
+                    const lineTotal = qty * item.unitPrice;
 
-                      return (
-                        <div
-                          key={item.id}
-                          className="rounded border border-gray-200 p-3"
-                        >
-                          <div className="mb-2 flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="font-medium">{item.item}</div>
-
-                              {item.material && (
-                                <div className="text-sm text-gray-500">
-                                  {item.material}
-                                </div>
-                              )}
+                    return (
+                      <div key={item.id} className="rounded border p-3">
+                        <div className="mb-2 flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="font-medium text-neutral-900">
+                              {item.item}
                             </div>
-
-                            <button
-                              type="button"
-                              className="text-sm text-gray-500 hover:text-black"
-                              onClick={() => removeSelectedItem(item.id)}
-                            >
-                              Quitar
-                            </button>
+                            {item.material ? (
+                              <div className="text-sm text-neutral-600">
+                                {item.material}
+                              </div>
+                            ) : null}
                           </div>
 
-                          <div className="grid gap-3">
-                            <label className="text-sm">
-                              <span className="mb-1 block text-gray-600">
-                                Cantidad
-                              </span>
+                          <button
+                            type="button"
+                            onClick={() => toggleItem(item)}
+                            className="text-sm text-neutral-500 hover:text-neutral-900"
+                          >
+                            Quitar
+                          </button>
+                        </div>
 
-                              <input
-                                ref={(el) => {
-                                  inputRefs.current[item.id] = el;
-                                }}
-                                type="number"
-                                min={1}
-                                step="0.01"
-                                className="w-full rounded border p-2"
-                                value={qty}
-                                onFocus={(e) => e.target.select()}
-                                onChange={(e) =>
-                                  handleChangeQuantity(item.id, e.target.value)
+                        <div className="grid gap-3">
+                          <label className="text-sm">
+                            <span className="mb-1 block text-neutral-600">
+                              Cantidad
+                            </span>
+                            <input
+                              type="number"
+                              min={1}
+                              step="0.01"
+                              className="w-full rounded border border-neutral-200 p-2"
+                              value={qty}
+                              onFocus={(e) => e.target.select()}
+                              onChange={(e) =>
+                                handleChangeQuantity(item.id, e.target.value)
+                              }
+                              onKeyDown={(e) => {
+                                const input = e.currentTarget;
+                                const isSingleDigit =
+                                  e.key >= "0" && e.key <= "9";
+                                const isAllSelected =
+                                  input.selectionStart === 0 &&
+                                  input.selectionEnd === input.value.length;
+
+                                if (isSingleDigit && isAllSelected) {
+                                  setQuantities((prev) => ({
+                                    ...prev,
+                                    [item.id]: Number(e.key),
+                                  }));
+                                  e.preventDefault();
                                 }
-                                onKeyDown={(e) => {
-                                  const input = e.currentTarget;
-                                  const isSingleDigit =
-                                    e.key >= "0" && e.key <= "9";
-                                  const isAllSelected =
-                                    input.selectionStart === 0 &&
-                                    input.selectionEnd === input.value.length;
 
-                                  if (isSingleDigit && isAllSelected) {
-                                    setQuantities((current) => ({
-                                      ...current,
-                                      [item.id]: Number(e.key),
-                                    }));
-                                    e.preventDefault();
-                                  }
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  confirm();
+                                }
+                              }}
+                            />
+                          </label>
 
-                                  if (e.key === "Enter") {
-                                    e.preventDefault();
-                                    confirmAddSelected();
-                                  }
-                                }}
-                              />
-                            </label>
-
-                            <div className="flex items-center justify-between text-sm text-gray-600">
-                              <span>
-                                {item.unitPrice} € / {item.unit}
-                              </span>
-                              <span className="font-medium text-black">
-                                {lineTotal.toFixed(2)} €
-                              </span>
-                            </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-neutral-600">
+                              {formatCurrency(item.unitPrice)} / {item.unit}
+                            </span>
+                            <span className="font-medium text-neutral-900">
+                              {formatCurrency(lineTotal)}
+                            </span>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
+                      </div>
+                    );
+                  })
                 )}
               </div>
             </div>
-          </div>
-        )}
 
-        <div className="mt-4 border-t pt-3">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-sm text-gray-500">
-              {selectedList.length > 0
-                ? `${selectedList.length} partidas preparadas · ${subtotal.toFixed(
-                    2
-                  )} €`
-                : "No hay partidas seleccionadas"}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex justify-between pt-4">
               <button
                 type="button"
-                disabled={!canGoBack}
                 onClick={goPrevFamily}
-                className="text-sm disabled:opacity-40"
+                disabled={step === 0}
+                className="rounded-xl border border-neutral-200 px-4 py-2 text-sm disabled:opacity-40"
               >
                 ← Anterior
               </button>
 
-              <button
-                type="button"
-                className="text-sm text-gray-600"
-                onClick={goNextFamily}
-              >
-                {isLastStep ? "Finalizar" : "Ignorar familia →"}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={goNextFamily}
+                  className="rounded-xl border border-neutral-200 px-4 py-2 text-sm"
+                >
+                  {step < families.length - 1 ? "Saltar" : "Finalizar"}
+                </button>
 
-              <button
-                type="button"
-                disabled={!canConfirm}
-                className="bg-black px-4 py-2 text-white disabled:opacity-40"
-                onClick={confirmAddSelected}
-              >
-                {isLastStep
-                  ? "Añadir selección y cerrar"
-                  : "Añadir selección y seguir →"}
-              </button>
+                <button
+                  type="button"
+                  onClick={confirm}
+                  disabled={selectedList.length === 0}
+                  className="rounded-xl bg-black px-4 py-2 text-sm text-white disabled:opacity-40"
+                >
+                  {step < families.length - 1
+                    ? "Añadir y seguir →"
+                    : "Añadir y cerrar"}
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
     </Modal>
   );

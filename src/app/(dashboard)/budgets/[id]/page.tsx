@@ -252,6 +252,23 @@ export default async function BudgetDetailPage({
   return (
     <main className="min-h-screen bg-neutral-50">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4 sm:gap-6 sm:px-6 sm:py-6 lg:px-8">
+
+        {/* HEADER ARRIBA DEL TODO */}
+        <BudgetHeader
+          budgetId={budget.id}
+          status={budget.status}
+          statusLabel={statusLabel}
+          statusBadgeClasses={statusBadgeClasses}
+          headerCode={headerCode}
+          projectName={projectName}
+          clientName={clientName}
+          viewedVersionNumber={viewedVersionNumber}
+          isHistoricalView={isHistoricalView}
+          dateLabel={dateLabel}
+          complexityLabel={complexityLabel}
+          totalLabel={totalLabel}
+        />
+
         <BudgetBreadcrumb
           headerCode={headerCode}
           viewedVersionNumber={viewedVersionNumber}
@@ -301,21 +318,6 @@ export default async function BudgetDetailPage({
             queryKeysToClear={["viewVersion"]}
           />
         )}
-
-        <BudgetHeader
-          budgetId={budget.id}
-          status={budget.status}
-          statusLabel={statusLabel}
-          statusBadgeClasses={statusBadgeClasses}
-          headerCode={headerCode}
-          projectName={projectName}
-          clientName={clientName}
-          viewedVersionNumber={viewedVersionNumber}
-          isHistoricalView={isHistoricalView}
-          dateLabel={dateLabel}
-          complexityLabel={complexityLabel}
-          totalLabel={totalLabel}
-        />
 
         <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
           <div className="min-w-0 space-y-6">

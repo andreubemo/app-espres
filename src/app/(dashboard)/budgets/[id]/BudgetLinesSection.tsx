@@ -54,7 +54,7 @@ export default function BudgetLinesSection({
 }: BudgetLinesSectionProps) {
   return (
     <div className="rounded-2xl border border-neutral-200 bg-white shadow-sm">
-      <div className="flex flex-col gap-3 border-b border-neutral-200 px-4 py-4 sm:px-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-b border-neutral-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div>
           <h2 className="text-lg font-semibold text-neutral-900">Partidas</h2>
           <p className="text-sm text-neutral-500">
@@ -64,7 +64,10 @@ export default function BudgetLinesSection({
         </div>
 
         <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-2 text-sm text-neutral-700">
-          Total: <span className="font-semibold text-neutral-900">{totalLabel}</span>
+          Total:{" "}
+          <span className="font-semibold tracking-tight text-neutral-900">
+            {totalLabel}
+          </span>
         </div>
       </div>
 
@@ -87,30 +90,33 @@ export default function BudgetLinesSection({
                 const lineTotal = getLineTotal(line);
 
                 return (
-                  <article key={line.id ?? `${item}-${index}`} className="p-4">
+                  <article
+                    key={line.id ?? `${item}-${index}`}
+                    className="space-y-4 p-4"
+                  >
                     <div className="flex items-start justify-between gap-4">
-                      <div className="space-y-1">
+                      <div className="min-w-0 space-y-1">
                         <p className="text-xs uppercase tracking-wide text-neutral-500">
                           Línea {index + 1}
                         </p>
-                        <h3 className="text-sm font-semibold text-neutral-900">
+                        <h3 className="text-base font-semibold leading-snug text-neutral-900">
                           {item}
                         </h3>
                         <p className="text-sm text-neutral-600">{family}</p>
                       </div>
 
-                      <div className="text-right">
+                      <div className="shrink-0 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-right">
                         <p className="text-xs uppercase tracking-wide text-neutral-500">
                           Total
                         </p>
-                        <p className="text-base font-semibold text-neutral-900">
+                        <p className="mt-1 text-base font-semibold text-neutral-900">
                           {formatCurrency(lineTotal)}
                         </p>
                       </div>
                     </div>
 
                     {(line.familyKey || line.catalogItemId || line.itemKey) && (
-                      <div className="mt-2 text-xs text-neutral-500">
+                      <div className="rounded-lg bg-neutral-50 px-3 py-2 text-xs text-neutral-500">
                         {line.familyKey ? `familyKey: ${line.familyKey}` : null}
                         {line.familyKey && (line.catalogItemId || line.itemKey)
                           ? " · "
@@ -123,7 +129,7 @@ export default function BudgetLinesSection({
                       </div>
                     )}
 
-                    <div className="mt-4 grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-3 gap-3">
                       <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-3">
                         <p className="text-xs uppercase tracking-wide text-neutral-500">
                           Cantidad
@@ -162,9 +168,15 @@ export default function BudgetLinesSection({
               <thead className="bg-neutral-50">
                 <tr className="border-b border-neutral-200 text-left">
                   <th className="px-6 py-3 font-medium text-neutral-600">#</th>
-                  <th className="px-6 py-3 font-medium text-neutral-600">Familia</th>
-                  <th className="px-6 py-3 font-medium text-neutral-600">Partida</th>
-                  <th className="px-6 py-3 font-medium text-neutral-600">Unidad</th>
+                  <th className="px-6 py-3 font-medium text-neutral-600">
+                    Familia
+                  </th>
+                  <th className="px-6 py-3 font-medium text-neutral-600">
+                    Partida
+                  </th>
+                  <th className="px-6 py-3 font-medium text-neutral-600">
+                    Unidad
+                  </th>
                   <th className="px-6 py-3 text-right font-medium text-neutral-600">
                     Cantidad
                   </th>
@@ -189,24 +201,26 @@ export default function BudgetLinesSection({
                   return (
                     <tr
                       key={line.id ?? `${item}-${index}`}
-                      className="border-b border-neutral-100 last:border-b-0"
+                      className="border-b border-neutral-100 align-top last:border-b-0"
                     >
-                      <td className="px-6 py-4 align-top text-neutral-500">
-                        {index + 1}
-                      </td>
+                      <td className="px-6 py-4 text-neutral-500">{index + 1}</td>
 
-                      <td className="px-6 py-4 align-top">
-                        <div className="font-medium text-neutral-900">{family}</div>
+                      <td className="px-6 py-4">
+                        <div className="font-medium text-neutral-900">
+                          {family}
+                        </div>
                         {(line.familyKey || line.catalogItemId) && (
                           <div className="mt-1 text-xs text-neutral-500">
                             {line.familyKey ? `key: ${line.familyKey}` : null}
                             {line.familyKey && line.catalogItemId ? " · " : null}
-                            {line.catalogItemId ? `catalog: ${line.catalogItemId}` : null}
+                            {line.catalogItemId
+                              ? `catalog: ${line.catalogItemId}`
+                              : null}
                           </div>
                         )}
                       </td>
 
-                      <td className="px-6 py-4 align-top">
+                      <td className="px-6 py-4">
                         <div className="font-medium text-neutral-900">{item}</div>
                         {line.itemKey && line.itemKey !== item && (
                           <div className="mt-1 text-xs text-neutral-500">
@@ -215,19 +229,17 @@ export default function BudgetLinesSection({
                         )}
                       </td>
 
-                      <td className="px-6 py-4 align-top text-neutral-700">
-                        {unit}
-                      </td>
+                      <td className="px-6 py-4 text-neutral-700">{unit}</td>
 
-                      <td className="px-6 py-4 text-right align-top font-medium text-neutral-900">
+                      <td className="px-6 py-4 text-right font-medium text-neutral-900">
                         {formatNumber(quantity, 2)}
                       </td>
 
-                      <td className="px-6 py-4 text-right align-top text-neutral-700">
+                      <td className="px-6 py-4 text-right text-neutral-700">
                         {formatCurrency(unitPrice)}
                       </td>
 
-                      <td className="px-6 py-4 text-right align-top font-semibold text-neutral-900">
+                      <td className="px-6 py-4 text-right font-semibold text-neutral-900">
                         {formatCurrency(lineTotal)}
                       </td>
                     </tr>

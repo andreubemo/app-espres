@@ -25,6 +25,7 @@ export default function BudgetSummaryCard({
       </div>
 
       <div className="space-y-4 p-6">
+        {/* SUBTOTAL */}
         <div className="flex items-center justify-between text-sm">
           <span className="text-neutral-500">Subtotal</span>
           <span className="font-medium text-neutral-900">
@@ -32,11 +33,16 @@ export default function BudgetSummaryCard({
           </span>
         </div>
 
-        <div className="flex items-center justify-between border-t border-neutral-200 pt-4">
-          <span className="text-sm font-medium text-neutral-700">Total</span>
-          <span className="text-xl font-semibold tracking-tight text-neutral-900">
-            {formatCurrency(total)}
-          </span>
+        {/* TOTAL */}
+        <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-neutral-700">
+              Total presupuesto
+            </span>
+            <span className="text-2xl font-semibold tracking-tight text-neutral-900">
+              {formatCurrency(total)}
+            </span>
+          </div>
         </div>
       </div>
     </div>
