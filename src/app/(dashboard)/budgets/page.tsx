@@ -6,6 +6,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+import PageHeader from "@/ui/common/PageHeader";
+import SectionCard from "@/ui/common/SectionCard";
+import StatusBadge from "@/ui/common/StatusBadge";
+import StatCard from "@/ui/common/StatCard";
+import BudgetsFiltersBar from "@/ui/budgets/BudgetsFiltersBar";
+
 type StoredBudgetLine = {
   id?: string;
   catalogItemId?: string;
@@ -99,42 +105,6 @@ function formatComplexity(value?: string) {
   }
 }
 
-function formatStatus(value: string) {
-  switch (value) {
-    case "DRAFT":
-      return "Borrador";
-    case "SENT":
-      return "Enviado";
-    case "ACCEPTED":
-    case "APPROVED":
-      return "Aceptado";
-    case "REJECTED":
-      return "Rechazado";
-    case "CANCELLED":
-      return "Cancelado";
-    default:
-      return value;
-  }
-}
-
-function getStatusClasses(value: string) {
-  switch (value) {
-    case "DRAFT":
-      return "border-neutral-200 bg-neutral-50 text-neutral-700";
-    case "SENT":
-      return "border-blue-200 bg-blue-50 text-blue-700";
-    case "ACCEPTED":
-    case "APPROVED":
-      return "border-green-200 bg-green-50 text-green-700";
-    case "REJECTED":
-      return "border-red-200 bg-red-50 text-red-700";
-    case "CANCELLED":
-      return "border-neutral-300 bg-neutral-100 text-neutral-700";
-    default:
-      return "border-neutral-200 bg-neutral-50 text-neutral-700";
-  }
-}
-
 function getLineTotal(line: StoredBudgetLine) {
   const explicitTotal = line.snapshot?.total ?? line.total;
   if (typeof explicitTotal === "number") return explicitTotal;
@@ -216,127 +186,39 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
     return matchesStatus && matchesQuery;
   });
 
-  const hasActiveFilters = Boolean(q || status);
-
   return (
     <main className="min-h-screen bg-neutral-50">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-6 py-6 lg:px-8">
-        <header className="flex flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm md:flex-row md:items-center md:justify-between">
-          <div className="space-y-2">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-neutral-500">
-                Gestión de presupuestos
-              </p>
-              <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">
-                Presupuestos
-              </h1>
-            </div>
+        <PageHeader
+          eyebrow="Gestión de presupuestos"
+          title="Presupuestos"
+          description="Borradores y presupuestos guardados de tu empresa."
+        />
 
-            <p className="text-sm text-neutral-600">
-              Borradores y presupuestos guardados de tu empresa.
-            </p>
-          </div>
-
-          <Link
-            href="/budgets/new"
-            className="inline-flex items-center justify-center rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-800"
-          >
-            Nuevo presupuesto
-          </Link>
-        </header>
-
-        <section className="rounded-2xl border border-neutral-200 bg-white shadow-sm">
-          <div className="space-y-4 p-6">
-            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-neutral-900">
-                  Buscar y filtrar
-                </h2>
-                <p className="text-sm text-neutral-500">
-                  Busca por código, proyecto, cliente o referencia.
-                </p>
-              </div>
-
-              <div className="text-sm text-neutral-500">
-                {filteredBudgets.length}{" "}
-                {filteredBudgets.length === 1
-                  ? "resultado"
-                  : "resultados"}
-              </div>
-            </div>
-
-            <form
-              method="GET"
-              className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px_auto]"
-            >
-              <label className="space-y-1.5">
-                <span className="text-sm font-medium text-neutral-700">
-                  Buscar
-                </span>
-                <input
-                  type="text"
-                  name="q"
-                  defaultValue={q}
-                  placeholder="Ej. roble, cliente, referencia..."
-                  className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-neutral-900 outline-none transition focus:border-neutral-400"
-                />
-              </label>
-
-              <label className="space-y-1.5">
-                <span className="text-sm font-medium text-neutral-700">
-                  Estado
-                </span>
-                <select
-                  name="status"
-                  defaultValue={status}
-                  className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-neutral-900 outline-none transition focus:border-neutral-400"
-                >
-                  <option value="">Todos</option>
-                  <option value="DRAFT">Borrador</option>
-                  <option value="SENT">Enviado</option>
-                  <option value="ACCEPTED">Aceptado</option>
-                  <option value="REJECTED">Rechazado</option>
-                  <option value="CANCELLED">Cancelado</option>
-                </select>
-              </label>
-
-              <div className="flex items-end gap-3">
-                <button
-                  type="submit"
-                  className="inline-flex w-full items-center justify-center rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-800 lg:w-auto"
-                >
-                  Aplicar filtros
-                </button>
-
-                {hasActiveFilters && (
-                  <Link
-                    href="/budgets"
-                    className="inline-flex w-full items-center justify-center rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-800 transition hover:bg-neutral-100 lg:w-auto"
-                  >
-                    Limpiar
-                  </Link>
-                )}
-              </div>
-            </form>
-          </div>
-        </section>
+        <SectionCard contentClassName="p-0">
+          <BudgetsFiltersBar
+            defaultQuery={q}
+            defaultStatus={status}
+            resultsCount={filteredBudgets.length}
+          />
+        </SectionCard>
 
         {filteredBudgets.length === 0 ? (
-          <section className="rounded-2xl border border-dashed border-neutral-300 bg-white p-8 text-center shadow-sm">
-            <div className="mx-auto max-w-md space-y-2">
+          <SectionCard className="border-dashed border-neutral-300">
+            <div className="mx-auto max-w-md space-y-2 text-center">
               <h2 className="text-lg font-semibold text-neutral-900">
-                {hasActiveFilters
+                {q || status
                   ? "No se han encontrado presupuestos"
                   : "No hay presupuestos todavía"}
               </h2>
 
               <p className="text-sm text-neutral-500">
-                {hasActiveFilters
+                {q || status
                   ? "Prueba a cambiar la búsqueda o limpiar los filtros actuales."
                   : "Cuando guardes tu primer presupuesto aparecerá aquí con su total, cliente, estado y acceso directo al detalle."}
               </p>
             </div>
-          </section>
+          </SectionCard>
         ) : (
           <section className="space-y-4">
             {filteredBudgets.map((budget) => {
@@ -376,13 +258,7 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
                             {codeLabel}
                           </h2>
 
-                          <span
-                            className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${getStatusClasses(
-                              budget.status
-                            )}`}
-                          >
-                            {formatStatus(budget.status)}
-                          </span>
+                          <StatusBadge status={budget.status} />
 
                           <span className="inline-flex items-center rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-xs font-medium text-neutral-700">
                             v{latestVersion?.version ?? 1}
@@ -405,7 +281,8 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
                           </p>
 
                           <p className="text-sm text-neutral-500">
-                            {lineCount} {lineCount === 1 ? "partida" : "partidas"}
+                            {lineCount}{" "}
+                            {lineCount === 1 ? "partida" : "partidas"}
                           </p>
                         </div>
                       </div>
@@ -421,50 +298,27 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-                      <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                        <p className="text-xs uppercase tracking-wide text-neutral-500">
-                          Fecha
-                        </p>
-                        <p className="mt-1 text-sm font-semibold text-neutral-900">
-                          {formatDate(data.date)}
-                        </p>
-                      </div>
+                      <StatCard label="Fecha" value={formatDate(data.date)} />
 
-                      <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                        <p className="text-xs uppercase tracking-wide text-neutral-500">
-                          Complejidad
-                        </p>
-                        <p className="mt-1 text-sm font-semibold text-neutral-900">
-                          {formatComplexity(data.complexity)}
-                        </p>
-                      </div>
+                      <StatCard
+                        label="Complejidad"
+                        value={formatComplexity(data.complexity)}
+                      />
 
-                      <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                        <p className="text-xs uppercase tracking-wide text-neutral-500">
-                          Superficie
-                        </p>
-                        <p className="mt-1 text-sm font-semibold text-neutral-900">
-                          {formatNumber(surfaceM2)} m²
-                        </p>
-                      </div>
+                      <StatCard
+                        label="Superficie"
+                        value={`${formatNumber(surfaceM2)} m²`}
+                      />
 
-                      <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                        <p className="text-xs uppercase tracking-wide text-neutral-500">
-                          Perímetro
-                        </p>
-                        <p className="mt-1 text-sm font-semibold text-neutral-900">
-                          {formatNumber(perimeterML)} ml
-                        </p>
-                      </div>
+                      <StatCard
+                        label="Perímetro"
+                        value={`${formatNumber(perimeterML)} ml`}
+                      />
 
-                      <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                        <p className="text-xs uppercase tracking-wide text-neutral-500">
-                          Referencia
-                        </p>
-                        <p className="mt-1 text-sm font-semibold text-neutral-900">
-                          {budget.reference}
-                        </p>
-                      </div>
+                      <StatCard
+                        label="Referencia"
+                        value={budget.reference}
+                      />
                     </div>
                   </article>
                 </Link>

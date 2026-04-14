@@ -371,7 +371,7 @@ export default function NewBudgetPage() {
             )}
           </div>
 
-          <aside className="space-y-6 xl:sticky xl:top-4 xl:self-start">
+          <aside className="space-y-6 xl:sticky xl:top-[calc(var(--app-header-height)+8px)] xl:self-start">
             <section className="rounded-2xl border border-neutral-200 bg-white shadow-sm">
               <div className="border-b border-neutral-200 px-6 py-4">
                 <h2 className="text-lg font-semibold text-neutral-900">

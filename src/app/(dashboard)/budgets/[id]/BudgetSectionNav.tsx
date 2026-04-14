@@ -45,7 +45,7 @@ export default function BudgetSectionNav() {
   }, []);
 
   return (
-    <div className="sticky top-4 z-20 rounded-2xl border border-neutral-200 bg-white/95 p-2 shadow-sm backdrop-blur">
+    <div className="sticky z-20 rounded-2xl border border-neutral-200 bg-white/95 p-2 shadow-sm backdrop-blur xl:top-[calc(var(--app-header-height)+8px)]">
       <div className="flex gap-2 overflow-x-auto scroll-smooth">
         {sections.map((section) => {
           const isActive = activeSection === section.id;

@@ -1,10 +1,10 @@
 import BudgetDetailActions from "./BudgetDetailActions";
+import StatusBadge from "@/ui/common/StatusBadge";
+import StatCard from "@/ui/common/StatCard";
 
 type BudgetHeaderProps = {
   budgetId: string;
   status: string;
-  statusLabel: string;
-  statusBadgeClasses: string;
   headerCode: string;
   projectName: string;
   clientName: string;
@@ -18,8 +18,6 @@ type BudgetHeaderProps = {
 export default function BudgetHeader({
   budgetId,
   status,
-  statusLabel,
-  statusBadgeClasses,
   headerCode,
   projectName,
   clientName,
@@ -49,11 +47,7 @@ export default function BudgetHeader({
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <span
-                className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${statusBadgeClasses}`}
-              >
-                {statusLabel}
-              </span>
+              <StatusBadge status={status} />
 
               <span className="inline-flex items-center rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs font-medium text-neutral-700">
                 Cliente: {clientName}
@@ -76,32 +70,16 @@ export default function BudgetHeader({
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:w-[560px] xl:grid-cols-3">
-            <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-              <p className="text-xs uppercase tracking-wide text-neutral-500">
-                Fecha
-              </p>
-              <p className="mt-1 text-sm font-semibold text-neutral-900">
-                {dateLabel}
-              </p>
-            </div>
+            <StatCard label="Fecha" value={dateLabel} />
 
-            <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-              <p className="text-xs uppercase tracking-wide text-neutral-500">
-                Complejidad
-              </p>
-              <p className="mt-1 text-sm font-semibold text-neutral-900">
-                {complexityLabel}
-              </p>
-            </div>
+            <StatCard label="Complejidad" value={complexityLabel} />
 
-            <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4 sm:col-span-2 xl:col-span-1 xl:text-right">
-              <p className="text-xs uppercase tracking-wide text-neutral-500">
-                Total presupuesto
-              </p>
-              <p className="mt-1 text-2xl font-semibold tracking-tight text-neutral-900">
-                {totalLabel}
-              </p>
-            </div>
+            <StatCard
+              label="Total presupuesto"
+              value={totalLabel}
+              align="right"
+              className="sm:col-span-2 xl:col-span-1"
+            />
           </div>
         </div>
 

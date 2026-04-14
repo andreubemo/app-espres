@@ -41,36 +41,6 @@ function formatDate(value?: string) {
   }).format(parsed);
 }
 
-function getStatusLabel(status?: string) {
-  switch (status) {
-    case "DRAFT":
-      return "Borrador";
-    case "SENT":
-      return "Enviado";
-    case "ACCEPTED":
-      return "Aceptado";
-    case "REJECTED":
-      return "Rechazado";
-    default:
-      return status || "-";
-  }
-}
-
-function getStatusBadgeClasses(status?: string) {
-  switch (status) {
-    case "DRAFT":
-      return "border-neutral-200 bg-neutral-50 text-neutral-700";
-    case "SENT":
-      return "border-blue-200 bg-blue-50 text-blue-700";
-    case "ACCEPTED":
-      return "border-green-200 bg-green-50 text-green-700";
-    case "REJECTED":
-      return "border-red-200 bg-red-50 text-red-700";
-    default:
-      return "border-neutral-200 bg-neutral-50 text-neutral-700";
-  }
-}
-
 function getComplexityLabel(complexity?: string) {
   switch (complexity?.toLowerCase()) {
     case "low":
@@ -176,6 +146,7 @@ export default async function BudgetDetailPage({
   }
 
   const latestVersion = budget.versions[0];
+
   const requestedVersionNumber =
     viewVersion && !Number.isNaN(Number(viewVersion))
       ? Number(viewVersion)
@@ -212,8 +183,6 @@ export default async function BudgetDetailPage({
   const clientName = budget.client?.name || "Sin cliente";
   const currentVersionNumber = latestVersion?.version ?? 1;
   const viewedVersionNumber = effectiveVersion.version;
-  const statusLabel = getStatusLabel(budget.status);
-  const statusBadgeClasses = getStatusBadgeClasses(budget.status);
   const dateLabel = formatDate(data.date);
   const complexityLabel = getComplexityLabel(data.complexity);
   const totalLabel = formatCurrency(total);
@@ -252,13 +221,59 @@ export default async function BudgetDetailPage({
   return (
     <main className="min-h-screen bg-neutral-50">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4 sm:gap-6 sm:px-6 sm:py-6 lg:px-8">
+        <BudgetBreadcrumb
+          headerCode={headerCode}
+          viewedVersionNumber={viewedVersionNumber}
+        />
 
-        {/* HEADER ARRIBA DEL TODO */}
+        {showRestoreBanner && (
+          <BudgetActionBanner
+            tone="success"
+            title="Versión restaurada correctamente"
+            message={`Restaurada la v${restoredFrom} como nueva v${restoredTo}.`}
+            queryKeysToClear={["restoredFrom", "restoredTo"]}
+          />
+        )}
+
+        {showCreatedVersionBanner && (
+          <BudgetActionBanner
+            tone="success"
+            title="Nueva versión creada"
+            message={`Se ha creado la nueva v${createdVersion}.`}
+            queryKeysToClear={["createdVersion"]}
+          />
+        )}
+
+        {showMarkedSentBanner && (
+          <BudgetActionBanner
+            tone="info"
+            title="Presupuesto marcado como enviado"
+            message="La versión actual ha sido marcada como enviada."
+            queryKeysToClear={["markedSent"]}
+          />
+        )}
+
+        {showDuplicatedBanner && (
+          <BudgetActionBanner
+            tone="success"
+            title="Presupuesto duplicado"
+            message="Se ha creado una copia correctamente."
+            queryKeysToClear={["duplicated"]}
+          />
+        )}
+
+        {isHistoricalView && (
+          <BudgetActionBanner
+            tone="info"
+            title="Modo histórico"
+            message={`Estás viendo la v${viewedVersionNumber}.`}
+            queryKeysToClear={["viewVersion"]}
+          />
+        )}
+
         <BudgetHeader
           budgetId={budget.id}
           status={budget.status}
-          statusLabel={statusLabel}
-          statusBadgeClasses={statusBadgeClasses}
           headerCode={headerCode}
           projectName={projectName}
           clientName={clientName}
@@ -269,56 +284,6 @@ export default async function BudgetDetailPage({
           totalLabel={totalLabel}
         />
 
-        <BudgetBreadcrumb
-          headerCode={headerCode}
-          viewedVersionNumber={viewedVersionNumber}
-        />
-
-        {showRestoreBanner && restoredFrom && restoredTo && (
-          <BudgetActionBanner
-            tone="success"
-            title="Versión restaurada correctamente"
-            message={`Restaurada la v${restoredFrom} como nueva v${restoredTo}.`}
-            queryKeysToClear={["restoredFrom", "restoredTo"]}
-          />
-        )}
-
-        {showCreatedVersionBanner && createdVersion && (
-          <BudgetActionBanner
-            tone="success"
-            title="Nueva versión creada"
-            message={`Se ha creado la nueva v${createdVersion} a partir del último snapshot guardado.`}
-            queryKeysToClear={["createdVersion"]}
-          />
-        )}
-
-        {showMarkedSentBanner && (
-          <BudgetActionBanner
-            tone="info"
-            title="Presupuesto marcado como enviado"
-            message="La versión actual ha quedado marcada como enviada y el estado del presupuesto se ha actualizado."
-            queryKeysToClear={["markedSent"]}
-          />
-        )}
-
-        {showDuplicatedBanner && (
-          <BudgetActionBanner
-            tone="success"
-            title="Presupuesto duplicado"
-            message="Se ha creado correctamente una copia del presupuesto como nuevo borrador."
-            queryKeysToClear={["duplicated"]}
-          />
-        )}
-
-        {isHistoricalView && (
-          <BudgetActionBanner
-            tone="info"
-            title="Visualizando una versión histórica"
-            message={`Estás viendo la v${viewedVersionNumber} en modo solo lectura. La versión actual del presupuesto es la v${currentVersionNumber}.`}
-            queryKeysToClear={["viewVersion"]}
-          />
-        )}
-
         <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
           <div className="min-w-0 space-y-6">
             <BudgetSectionNav />
@@ -328,7 +293,7 @@ export default async function BudgetDetailPage({
                 headerCode={headerCode}
                 projectName={projectName}
                 clientName={clientName}
-                statusLabel={statusLabel}
+                statusLabel={budget.status}
               />
             </section>
 
@@ -353,7 +318,7 @@ export default async function BudgetDetailPage({
             </section>
           </div>
 
-          <aside className="space-y-6 xl:sticky xl:top-4 xl:self-start">
+          <aside className="space-y-6 xl:sticky xl:top-[72px] xl:self-start">
             <BudgetSummaryCard subtotal={subtotal} total={total} />
 
             <BudgetVersionContextCard
