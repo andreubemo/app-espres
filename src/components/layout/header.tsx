@@ -1,5 +1,5 @@
 import { Container } from "./container";
-import { Button } from "@/components/ui";
+import { Button } from "@/ui/button";
 
 export function Header() {
   return (

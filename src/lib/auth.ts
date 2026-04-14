@@ -1,4 +1,5 @@
 import type { NextAuthOptions } from "next-auth";
+import { getServerSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
 
@@ -98,3 +99,5 @@ export const authOptions: NextAuthOptions = {
 
   secret: process.env.AUTH_SECRET,
 };
+
+export const auth = () => getServerSession(authOptions);

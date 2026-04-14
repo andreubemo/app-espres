@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Modal } from "@/components/ui";
+import { useState } from "react";
+import Modal from "@/ui/modal";
 import { createItem } from "@/app/actions/create-item";
 import { updateItem } from "@/app/actions/update-item";
 
@@ -20,20 +20,22 @@ export default function CreateItemModal({
   item?: Item;
   onClose?: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (item) setOpen(true);
-  }, [item]);
-
   const isEdit = Boolean(item);
+  const open = isEdit || isCreateOpen;
+
+  function handleClose() {
+    setIsCreateOpen(false);
+    onClose?.();
+  }
 
   return (
     <>
       {!item && (
         <button
-          onClick={() => setOpen(true)}
+          onClick={() => setIsCreateOpen(true)}
           className="rounded-md bg-black px-4 py-2 text-sm text-white"
         >
           Nuevo item
@@ -42,25 +44,23 @@ export default function CreateItemModal({
 
       <Modal
         open={open}
-        onClose={() => {
-          setOpen(false);
-          onClose?.();
-        }}
+        onClose={handleClose}
         title={isEdit ? "Editar item" : "Nuevo item"}
       >
         <form
           action={async (formData) => {
             try {
               setError("");
+
               if (isEdit && item) {
                 await updateItem(item.id, formData);
               } else {
                 await createItem(formData);
               }
-              setOpen(false);
-              onClose?.();
-            } catch (e: any) {
-              setError(e.message || "Error");
+
+              handleClose();
+            } catch (e: unknown) {
+              setError(e instanceof Error ? e.message : "Error");
             }
           }}
           className="space-y-4"
@@ -93,13 +93,7 @@ export default function CreateItemModal({
           {error && <p className="text-sm text-red-600">{error}</p>}
 
           <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                onClose?.();
-              }}
-            >
+            <button type="button" onClick={handleClose}>
               Cancelar
             </button>
             <button
