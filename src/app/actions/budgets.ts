@@ -228,6 +228,7 @@ export async function saveBudgetDraft(input: Budget) {
   const budget = await prisma.budget.create({
     data: {
       reference: input.code,
+      project: input.project,
       status: "DRAFT",
       companyId,
       clientId: client.id,
@@ -354,6 +355,7 @@ export async function duplicateBudgetDraft(budgetId: string) {
   const duplicatedBudget = await prisma.budget.create({
     data: {
       reference: buildDuplicateReference(budget.reference),
+      project: budget.project,
       status: "DRAFT",
       companyId,
       clientId: budget.clientId,

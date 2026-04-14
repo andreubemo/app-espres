@@ -1,6 +1,6 @@
 // src/domain/budgets/budget.calculations.ts
 
-import { Budget, BudgetComplexity, BudgetLine } from './budget.model';
+import { Budget, BudgetComplexity, BudgetLine } from "./budget.model";
 
 export const COMPLEXITY_FACTORS: Record<BudgetComplexity, number> = {
   low: 1,
@@ -31,13 +31,11 @@ export function calculateBudgetTotal(
 
 export function recalculateBudget(budget: Budget): Budget {
   const subtotal = calculateBudgetSubtotal(budget.lines);
-  const factor = COMPLEXITY_FACTORS[budget.complexity];
   const total = calculateBudgetTotal(subtotal, budget.complexity);
 
   return {
     ...budget,
     subtotal,
-    complexityFactor: factor,
     total,
   };
 }

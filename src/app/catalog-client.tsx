@@ -8,8 +8,8 @@ import {
   TableRow,
   TableHead,
   TableCell,
-} from "@/components/ui";
-import { RowActions } from "@/components/ui/row-actions";
+} from "@/ui/table";
+import { RowActions } from "@/ui/row-actions";
 import CreateItemModal from "@/components/catalog/create-item-modal";
 import { deleteItem } from "@/app/actions/delete-item";
 
