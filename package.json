@@ -5,6 +5,9 @@
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build",
+    "prebuild": "prisma generate",
+    "postinstall": "prisma generate",
+    "prisma:generate": "prisma generate",
     "start": "next start",
     "lint": "eslint",
     "import:excel": "node scripts/import-excel-to-json.js"
