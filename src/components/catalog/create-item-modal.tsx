@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Modal from "@/ui/modal";
+
+import Modal from "@/ui/common/Modal";
 import { createItem } from "@/app/actions/create-item";
 import { updateItem } from "@/app/actions/update-item";
 
@@ -35,6 +36,7 @@ export default function CreateItemModal({
     <>
       {!item && (
         <button
+          type="button"
           onClick={() => setIsCreateOpen(true)}
           className="rounded-md bg-black px-4 py-2 text-sm text-white"
         >
@@ -71,18 +73,21 @@ export default function CreateItemModal({
             placeholder="Concepto"
             className="w-full rounded border p-2"
           />
+
           <input
             name="category"
             defaultValue={item?.category}
             placeholder="Categoría"
             className="w-full rounded border p-2"
           />
+
           <input
             name="unit"
             defaultValue={item?.unit}
             placeholder="Unidad"
             className="w-full rounded border p-2"
           />
+
           <input
             name="price"
             defaultValue={item?.price}
@@ -90,12 +95,13 @@ export default function CreateItemModal({
             className="w-full rounded border p-2"
           />
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
           <div className="flex justify-end gap-2">
             <button type="button" onClick={handleClose}>
               Cancelar
             </button>
+
             <button
               type="submit"
               className="rounded bg-black px-4 py-2 text-white"
