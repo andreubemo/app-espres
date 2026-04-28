@@ -1,52 +1,8 @@
-/*
-  Warnings:
-
-  - The primary key for the `Budget` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - You are about to drop the column `client` on the `Budget` table. All the data in the column will be lost.
-  - You are about to drop the column `notes` on the `Budget` table. All the data in the column will be lost.
-  - You are about to drop the column `title` on the `Budget` table. All the data in the column will be lost.
-  - You are about to drop the column `updatedAt` on the `Budget` table. All the data in the column will be lost.
-  - You are about to drop the `BudgetItem` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `Item` table. If the table is not empty, all the data it contains will be lost.
-  - Added the required column `clientId` to the `Budget` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `companyId` to the `Budget` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `createdById` to the `Budget` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `reference` to the `Budget` table without a default value. This is not possible if the table is not empty.
-
-*/
 -- CreateEnum
 CREATE TYPE "Role" AS ENUM ('OWNER', 'ADMIN', 'WORKER');
 
 -- CreateEnum
 CREATE TYPE "BudgetStatus" AS ENUM ('DRAFT', 'SENT', 'ACCEPTED', 'REJECTED');
-
--- DropForeignKey
-ALTER TABLE "BudgetItem" DROP CONSTRAINT "BudgetItem_budgetId_fkey";
-
--- DropForeignKey
-ALTER TABLE "BudgetItem" DROP CONSTRAINT "BudgetItem_itemId_fkey";
-
--- AlterTable
-ALTER TABLE "Budget" DROP CONSTRAINT "Budget_pkey",
-DROP COLUMN "client",
-DROP COLUMN "notes",
-DROP COLUMN "title",
-DROP COLUMN "updatedAt",
-ADD COLUMN     "clientId" TEXT NOT NULL,
-ADD COLUMN     "companyId" TEXT NOT NULL,
-ADD COLUMN     "createdById" TEXT NOT NULL,
-ADD COLUMN     "reference" TEXT NOT NULL,
-ADD COLUMN     "status" "BudgetStatus" NOT NULL DEFAULT 'DRAFT',
-ALTER COLUMN "id" DROP DEFAULT,
-ALTER COLUMN "id" SET DATA TYPE TEXT,
-ADD CONSTRAINT "Budget_pkey" PRIMARY KEY ("id");
-DROP SEQUENCE "Budget_id_seq";
-
--- DropTable
-DROP TABLE "BudgetItem";
-
--- DropTable
-DROP TABLE "Item";
 
 -- CreateTable
 CREATE TABLE "Company" (
@@ -95,6 +51,68 @@ CREATE TABLE "Material" (
 );
 
 -- CreateTable
+CREATE TABLE "Item" (
+    "id" SERIAL NOT NULL,
+    "name" TEXT NOT NULL,
+    "category" TEXT NOT NULL,
+    "unit" TEXT NOT NULL,
+    "price" DECIMAL(10,2) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Item_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "CatalogItem" (
+    "id" TEXT NOT NULL,
+    "companyId" TEXT NOT NULL,
+    "sourceSheet" TEXT NOT NULL,
+    "sourceRow" INTEGER NOT NULL,
+    "sectionTitle" TEXT,
+    "familyKey" TEXT NOT NULL,
+    "itemKey" TEXT NOT NULL,
+    "family" TEXT NOT NULL,
+    "subfamily" TEXT,
+    "material" TEXT,
+    "itemName" TEXT NOT NULL,
+    "comments" TEXT,
+    "input1Label" TEXT,
+    "input2Label" TEXT,
+    "input3Label" TEXT,
+    "measureUnit" TEXT,
+    "quantityLabel" TEXT,
+    "priceLabel" TEXT,
+    "unitPriceBase" DOUBLE PRECISION NOT NULL,
+    "unitPriceRaw" DOUBLE PRECISION,
+    "measureCurrent" DOUBLE PRECISION,
+    "qtyCurrent" DOUBLE PRECISION,
+    "realPriceCurrent" DOUBLE PRECISION,
+    "companyCostCurrent" DOUBLE PRECISION,
+    "markupCurrent" DOUBLE PRECISION,
+    "totalCurrent" DOUBLE PRECISION,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "CatalogItem_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Budget" (
+    "id" TEXT NOT NULL,
+    "reference" TEXT NOT NULL,
+    "project" TEXT NOT NULL,
+    "status" "BudgetStatus" NOT NULL DEFAULT 'DRAFT',
+    "companyId" TEXT NOT NULL,
+    "clientId" TEXT NOT NULL,
+    "createdById" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Budget_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "BudgetVersion" (
     "id" TEXT NOT NULL,
     "version" INTEGER NOT NULL,
@@ -113,6 +131,15 @@ CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 CREATE UNIQUE INDEX "Client_email_companyId_key" ON "Client"("email", "companyId");
 
 -- CreateIndex
+CREATE INDEX "CatalogItem_companyId_family_idx" ON "CatalogItem"("companyId", "family");
+
+-- CreateIndex
+CREATE INDEX "CatalogItem_companyId_familyKey_idx" ON "CatalogItem"("companyId", "familyKey");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "CatalogItem_companyId_itemKey_key" ON "CatalogItem"("companyId", "itemKey");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "BudgetVersion_budgetId_version_key" ON "BudgetVersion"("budgetId", "version");
 
 -- AddForeignKey
@@ -123,6 +150,9 @@ ALTER TABLE "Client" ADD CONSTRAINT "Client_companyId_fkey" FOREIGN KEY ("compan
 
 -- AddForeignKey
 ALTER TABLE "Material" ADD CONSTRAINT "Material_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CatalogItem" ADD CONSTRAINT "CatalogItem_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Budget" ADD CONSTRAINT "Budget_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "Company"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
