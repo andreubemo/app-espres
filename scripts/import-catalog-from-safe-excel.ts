@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 
 const EXCEL_PATH =
   process.env.EXCEL_PATH ??
-  path.resolve(process.cwd(), "excel-presupuestos-2026-eswood-v5-seguro-import.xlsx");
+  path.resolve(process.cwd(), "resources/imports/import-catalog-from-safe-excel.ts.xlsx");
 
 const SHEET_NAME = process.env.SHEET_NAME ?? "CATALOGO_IMPORT";
 const COMPANY_NAME = process.env.COMPANY_NAME ?? "Espres Carpintería";
