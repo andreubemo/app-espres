@@ -25,10 +25,14 @@ model User {
   email          String   @unique
   password       String
   role           Role
+  active         Boolean  @default(true)
   company        Company  @relation(fields: [companyId], references: [id])
   companyId      String
   budgetsCreated Budget[] @relation("CreatedBy")
   createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([companyId, role, active])
 }
 
 model Client {

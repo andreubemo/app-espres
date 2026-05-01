@@ -49,5 +49,6 @@ export const config = {
     "/clients/:path*",
     "/materials/:path*",
     "/catalog/:path*",
+    "/settings/:path*",
   ],
 };

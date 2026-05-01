@@ -17,29 +17,29 @@ export default function BudgetSummaryCard({
   total,
 }: BudgetSummaryCardProps) {
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white shadow-sm">
-      <div className="border-b border-neutral-200 px-6 py-4">
-        <h2 className="text-lg font-semibold text-neutral-900">
+    <div className="rounded-lg border border-border bg-card-background shadow-sm">
+      <div className="border-b border-border px-4 py-3">
+        <h2 className="text-lg font-semibold text-text-strong">
           Resumen económico
         </h2>
       </div>
 
-      <div className="space-y-4 p-6">
+      <div className="space-y-4 p-4">
         {/* SUBTOTAL */}
         <div className="flex items-center justify-between text-sm">
-          <span className="text-neutral-500">Subtotal</span>
-          <span className="font-medium text-neutral-900">
+          <span className="text-text-neutral">Subtotal</span>
+          <span className="font-medium text-text-strong">
             {formatCurrency(subtotal)}
           </span>
         </div>
 
         {/* TOTAL */}
-        <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-4">
+        <div className="rounded-md border border-border bg-surface px-4 py-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-neutral-700">
+            <span className="text-sm font-medium text-text-neutral">
               Total presupuesto
             </span>
-            <span className="text-2xl font-semibold tracking-tight text-neutral-900">
+            <span className="text-2xl font-semibold tracking-tight text-text-strong">
               {formatCurrency(total)}
             </span>
           </div>

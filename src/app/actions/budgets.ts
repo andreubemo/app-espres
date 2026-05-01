@@ -1,12 +1,11 @@
 "use server";
 
 import bcrypt from "bcrypt";
-import { getServerSession } from "next-auth";
 import { revalidatePath } from "next/cache";
 
-import { authOptions } from "@/lib/auth";
 import { Budget } from "@/domain/budgets/budget.model";
 import { Prisma } from "@/generated/prisma";
+import { requireInternalUser } from "@/lib/access-control";
 import { prisma } from "@/lib/prisma";
 
 type StoredBudgetLine = {
@@ -110,34 +109,7 @@ function cloneStoredBudgetData(data: StoredBudgetData): Prisma.InputJsonValue {
 }
 
 async function getAuthenticatedUserContext() {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user?.id) {
-    throw new Error("Debes iniciar sesión para continuar.");
-  }
-
-  if (!session.user.companyId) {
-    throw new Error("Tu usuario no tiene empresa asociada.");
-  }
-
-  if (session.user.type !== "USER") {
-    throw new Error(
-      "Solo un usuario interno puede realizar acciones sobre presupuestos."
-    );
-  }
-
-  const user = await prisma.user.findFirst({
-    where: {
-      id: session.user.id,
-      companyId: session.user.companyId,
-    },
-  });
-
-  if (!user) {
-    throw new Error(
-      "No se ha encontrado el usuario autenticado en la base de datos."
-    );
-  }
+  const user = await requireInternalUser();
 
   return {
     userId: user.id,

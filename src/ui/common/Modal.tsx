@@ -20,29 +20,27 @@ export default function Modal({
   const sizeClass =
     size === "fullscreen"
       ? "h-[calc(100dvh-32px)] w-[calc(100vw-32px)] max-w-none"
-    : size === "wide"
-      ? "h-[calc(100dvh-16px)] w-[calc(100vw-16px)] max-w-none sm:h-[calc(100dvh-48px)] sm:w-[min(1300px,calc(100vw-48px))]"
-      : "w-full max-w-xl";
+      : size === "wide"
+      ? "h-[calc(100dvh-48px)] w-[min(1300px,calc(100vw-48px))] max-w-none"
+      : "max-h-[calc(100dvh-32px)] w-full max-w-xl";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-2 sm:p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-text-strong/45 p-3 sm:p-4">
       <div
         className={[
-          "relative flex flex-col overflow-hidden rounded-lg bg-white shadow-xl sm:rounded-2xl",
+          "relative flex flex-col overflow-hidden rounded-lg border border-border bg-card-background shadow-xl",
           sizeClass,
         ].join(" ")}
       >
         {/* HEADER */}
-        <div className="flex shrink-0 items-center justify-between border-b border-neutral-200 px-4 py-2.5 sm:px-5 sm:py-3">
-          <h2 className="text-base font-semibold text-neutral-950 sm:text-lg">
-            {title}
-          </h2>
+        <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-2.5">
+          <h2 className="text-base font-semibold text-text-strong">{title}</h2>
 
           {onClose && (
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg px-2 py-1 text-xl leading-none hover:bg-neutral-100"
+              className="rounded-md px-2 py-1 text-xl leading-none text-text-neutral transition hover:bg-surface hover:text-text-strong"
               aria-label="Cerrar"
             >
               ×

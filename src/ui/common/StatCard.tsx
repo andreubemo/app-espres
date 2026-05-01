@@ -16,21 +16,21 @@ export default function StatCard({
   return (
     <div
       className={[
-        "rounded-xl border border-neutral-200 bg-neutral-50 p-4",
+        "rounded-lg border border-[#e2ded8] bg-[#fbfaf7] p-3",
         align === "right" ? "text-right" : "",
         className,
       ].join(" ")}
     >
-      <p className="text-xs uppercase tracking-wide text-neutral-500">
+      <p className="text-xs font-semibold uppercase text-[#5f5a52]">
         {label}
       </p>
 
-      <p className="mt-1 text-sm font-semibold text-neutral-900">
+      <p className="mt-0.5 text-sm font-semibold text-text-strong">
         {value}
       </p>
 
       {hint ? (
-        <p className="mt-1 text-xs text-neutral-500">{hint}</p>
+        <p className="mt-0.5 text-xs text-text-neutral">{hint}</p>
       ) : null}
     </div>
   );

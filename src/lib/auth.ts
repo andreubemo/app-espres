@@ -27,9 +27,19 @@ export const authOptions: NextAuthOptions = {
 
         const user = await prisma.user.findUnique({
           where: { email },
+          select: {
+            id: true,
+            email: true,
+            password: true,
+            role: true,
+            companyId: true,
+            active: true,
+          },
         });
 
         if (user) {
+          if (!user.active) return null;
+
           const valid = await bcrypt.compare(credentials.password, user.password);
 
           if (!valid) return null;
@@ -83,10 +93,10 @@ export const authOptions: NextAuthOptions = {
 
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as string;
-        session.user.companyId = token.companyId as string;
-        session.user.type = token.type as string;
+        session.user.id = token.id;
+        session.user.role = token.role;
+        session.user.companyId = token.companyId;
+        session.user.type = token.type;
       }
 
       return session;

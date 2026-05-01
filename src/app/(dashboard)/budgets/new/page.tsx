@@ -124,22 +124,22 @@ export default function NewBudgetPage() {
   }
 
   return (
-    <main className="min-h-screen bg-neutral-50">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
-        <section className="rounded-2xl border border-neutral-200 bg-white shadow-sm">
-          <div className="space-y-6 p-4 sm:p-6">
-            <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+    <main className="min-h-screen bg-surface">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-3 sm:px-4 sm:py-6 lg:px-8">
+        <section className="rounded-lg border border-border bg-card-background shadow-sm">
+          <div className="space-y-4 p-4 sm:p-4">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
               <div className="space-y-3">
                 <div className="space-y-1">
-                  <p className="text-xs font-medium uppercase tracking-[0.18em] text-neutral-500">
+                  <p className="text-xs font-medium uppercase tracking-[0.18em] text-text-neutral">
                     Nuevo presupuesto
                   </p>
 
-                  <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">
+                  <h1 className="text-2xl font-semibold tracking-tight text-text-strong sm:text-3xl">
                     {getStepTitle(currentStep)}
                   </h1>
 
-                  <p className="max-w-2xl text-sm text-neutral-600">
+                  <p className="max-w-2xl text-sm text-text-neutral">
                     {getStepDescription(currentStep, budget)}
                   </p>
                 </div>
@@ -148,8 +148,8 @@ export default function NewBudgetPage() {
                   <span
                     className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${
                       currentStep === 1
-                        ? "border-neutral-900 bg-neutral-900 text-white"
-                        : "border-neutral-200 bg-neutral-50 text-neutral-700"
+                        ? "border-primary bg-primary text-white"
+                        : "border-border bg-surface text-text-neutral"
                     }`}
                   >
                     1. Base
@@ -158,8 +158,8 @@ export default function NewBudgetPage() {
                   <span
                     className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${
                       currentStep === 2
-                        ? "border-neutral-900 bg-neutral-900 text-white"
-                        : "border-neutral-200 bg-neutral-50 text-neutral-700"
+                        ? "border-primary bg-primary text-white"
+                        : "border-border bg-surface text-text-neutral"
                     }`}
                   >
                     2. Partidas
@@ -168,8 +168,8 @@ export default function NewBudgetPage() {
                   <span
                     className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${
                       currentStep === 3
-                        ? "border-neutral-900 bg-neutral-900 text-white"
-                        : "border-neutral-200 bg-neutral-50 text-neutral-700"
+                        ? "border-primary bg-primary text-white"
+                        : "border-border bg-surface text-text-neutral"
                     }`}
                   >
                     3. Revisión
@@ -178,29 +178,29 @@ export default function NewBudgetPage() {
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3 xl:w-[560px]">
-                <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-neutral-500">
+                <div className="rounded-md border border-border bg-surface p-4">
+                  <p className="text-xs uppercase tracking-wide text-text-neutral">
                     Paso actual
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-neutral-900">
+                  <p className="mt-1 text-sm font-semibold text-text-strong">
                     {currentStep} de 3
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-neutral-500">
+                <div className="rounded-md border border-border bg-surface p-4">
+                  <p className="text-xs uppercase tracking-wide text-text-neutral">
                     Partidas
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-neutral-900">
+                  <p className="mt-1 text-sm font-semibold text-text-strong">
                     {budget?.lines.length ?? 0}
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4 sm:col-span-3 xl:col-span-1 xl:text-right">
-                  <p className="text-xs uppercase tracking-wide text-neutral-500">
+                <div className="rounded-md border border-border bg-surface p-4 sm:col-span-3 xl:col-span-1 xl:text-right">
+                  <p className="text-xs uppercase tracking-wide text-text-neutral">
                     Total actual
                   </p>
-                  <p className="mt-1 text-2xl font-semibold tracking-tight text-neutral-900">
+                  <p className="mt-1 text-2xl font-semibold tracking-tight text-text-strong">
                     {formatCurrency(budget?.total ?? 0)}
                   </p>
                 </div>
@@ -208,49 +208,49 @@ export default function NewBudgetPage() {
             </div>
 
             {budget ? (
-              <div className="grid gap-4 border-t border-neutral-200 pt-6 md:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-neutral-500">
+              <div className="grid gap-4 border-t border-border pt-6 md:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-md border border-border bg-surface p-4">
+                  <p className="text-xs uppercase tracking-wide text-text-neutral">
                     Código
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-neutral-900">
+                  <p className="mt-1 text-sm font-semibold text-text-strong">
                     {budget.code}
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-neutral-500">
+                <div className="rounded-md border border-border bg-surface p-4">
+                  <p className="text-xs uppercase tracking-wide text-text-neutral">
                     Proyecto
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-neutral-900">
+                  <p className="mt-1 text-sm font-semibold text-text-strong">
                     {budget.project}
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-neutral-500">
+                <div className="rounded-md border border-border bg-surface p-4">
+                  <p className="text-xs uppercase tracking-wide text-text-neutral">
                     Dimensiones
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-neutral-900">
+                  <p className="mt-1 text-sm font-semibold text-text-strong">
                     {budget.dimensions.width} m × {budget.dimensions.length} m
                   </p>
-                  <p className="mt-1 text-xs text-neutral-500">
+                  <p className="mt-1 text-xs text-text-neutral">
                     {budget.dimensions.surfaceM2} m² ·{" "}
                     {budget.dimensions.perimeterML} ml
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-neutral-500">
+                <div className="rounded-md border border-border bg-surface p-4">
+                  <p className="text-xs uppercase tracking-wide text-text-neutral">
                     Complejidad
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-neutral-900">
+                  <p className="mt-1 text-sm font-semibold text-text-strong">
                     {getComplexityLabel(budget.complexity)}
                   </p>
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-5 text-sm text-neutral-600">
+              <div className="rounded-md border border-dashed border-primary-soft bg-surface p-5 text-sm text-text-neutral">
                 Empieza definiendo los datos base del presupuesto. En cuanto los
                 completes, se abrirá el flujo guiado de partidas.
               </div>
@@ -259,13 +259,13 @@ export default function NewBudgetPage() {
         </section>
 
         {saveMessage && (
-          <div className="rounded-2xl border border-neutral-200 bg-white p-4 text-sm text-neutral-700 shadow-sm">
+          <div className="rounded-lg border border-border bg-card-background p-4 text-sm text-text-neutral shadow-sm">
             {saveMessage}
           </div>
         )}
 
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="min-w-0 space-y-6">
+        <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="min-w-0 space-y-4">
             {!budget ? (
               <BudgetBaseModal
                 open={!budget}
@@ -286,32 +286,32 @@ export default function NewBudgetPage() {
               />
             ) : (
               <>
-                <section className="rounded-2xl border border-neutral-200 bg-white shadow-sm">
-                  <div className="flex flex-col gap-3 border-b border-neutral-200 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <section className="rounded-lg border border-border bg-card-background shadow-sm">
+                  <div className="flex flex-col gap-3 border-b border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <h2 className="text-lg font-semibold text-neutral-900">
+                      <h2 className="text-lg font-semibold text-text-strong">
                         Paso 2 · Selección de partidas
                       </h2>
-                      <p className="text-sm text-neutral-500">
+                      <p className="text-sm text-text-neutral">
                         Añade partidas familia por familia desde el selector guiado.
                       </p>
                     </div>
 
                     <button
                       onClick={() => setWizardOpen((open) => !open)}
-                      className="inline-flex items-center justify-center rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-800 transition hover:bg-neutral-100"
+                      className="inline-flex items-center justify-center rounded-md border border-border bg-card-background px-4 py-2.5 text-sm font-medium text-text-strong transition hover:bg-surface"
                       type="button"
                     >
                       {wizardOpen ? "Ocultar selector" : "Mostrar selector"}
                     </button>
                   </div>
 
-                  <div className="p-6">
+                  <div className="p-4">
                     <div
-                      className={`rounded-xl border px-4 py-4 text-sm ${
+                      className={`rounded-md border px-4 py-3 text-sm ${
                         wizardOpen
-                          ? "border-neutral-200 bg-neutral-50 text-neutral-700"
-                          : "border-amber-200 bg-amber-50 text-amber-800"
+                          ? "border-border bg-surface text-text-neutral"
+                          : "border-primary-soft bg-primary-soft/20 text-primary-strong"
                       }`}
                     >
                       {wizardOpen
@@ -332,24 +332,24 @@ export default function NewBudgetPage() {
                   }}
                 />
 
-                <section className="rounded-2xl border border-neutral-200 bg-white shadow-sm">
-                  <div className="flex flex-col gap-3 border-b border-neutral-200 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <section className="rounded-lg border border-border bg-card-background shadow-sm">
+                  <div className="flex flex-col gap-3 border-b border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <h2 className="text-lg font-semibold text-neutral-900">
+                      <h2 className="text-lg font-semibold text-text-strong">
                         Paso 3 · Revisión final
                       </h2>
-                      <p className="text-sm text-neutral-500">
+                      <p className="text-sm text-text-neutral">
                         Revisa las partidas añadidas antes de guardar el borrador.
                       </p>
                     </div>
 
-                    <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-2 text-sm text-neutral-700">
+                    <div className="rounded-md border border-border bg-surface px-4 py-2 text-sm text-text-neutral">
                       {budget.lines.length}{" "}
                       {budget.lines.length === 1 ? "partida" : "partidas"}
                     </div>
                   </div>
 
-                  <div className="p-6">
+                  <div className="p-4">
                     {budget.lines.length ? (
                       <BudgetLinesPanel
                         lines={budget.lines}
@@ -360,7 +360,7 @@ export default function NewBudgetPage() {
                         }
                       />
                     ) : (
-                      <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-6 text-sm text-neutral-500">
+                      <div className="rounded-md border border-dashed border-primary-soft bg-surface p-4 text-sm text-text-neutral">
                         No hay partidas añadidas todavía. Abre el selector guiado
                         para empezar a construir el presupuesto.
                       </div>
@@ -371,20 +371,20 @@ export default function NewBudgetPage() {
             )}
           </div>
 
-          <aside className="space-y-6 xl:sticky xl:top-[calc(var(--app-header-height)+8px)] xl:self-start">
-            <section className="rounded-2xl border border-neutral-200 bg-white shadow-sm">
-              <div className="border-b border-neutral-200 px-6 py-4">
-                <h2 className="text-lg font-semibold text-neutral-900">
+          <aside className="space-y-4 xl:sticky xl:top-[calc(var(--app-header-height)+8px)] xl:self-start">
+            <section className="rounded-lg border border-border bg-card-background shadow-sm">
+              <div className="border-b border-border px-4 py-3">
+                <h2 className="text-lg font-semibold text-text-strong">
                   Resumen
                 </h2>
               </div>
 
-              <div className="space-y-4 p-6">
-                <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-4">
-                  <p className="text-xs uppercase tracking-wide text-neutral-500">
+              <div className="space-y-4 p-4">
+                <div className="rounded-md border border-border bg-surface px-4 py-3">
+                  <p className="text-xs uppercase tracking-wide text-text-neutral">
                     Estado del flujo
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-neutral-900">
+                  <p className="mt-1 text-sm font-semibold text-text-strong">
                     {currentStep === 1
                       ? "Pendiente de datos base"
                       : currentStep === 2
@@ -394,20 +394,20 @@ export default function NewBudgetPage() {
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-                  <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                    <p className="text-xs uppercase tracking-wide text-neutral-500">
+                  <div className="rounded-md border border-border bg-surface p-4">
+                    <p className="text-xs uppercase tracking-wide text-text-neutral">
                       Partidas
                     </p>
-                    <p className="mt-1 text-sm font-semibold text-neutral-900">
+                    <p className="mt-1 text-sm font-semibold text-text-strong">
                       {budget?.lines.length ?? 0}
                     </p>
                   </div>
 
-                  <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                    <p className="text-xs uppercase tracking-wide text-neutral-500">
+                  <div className="rounded-md border border-border bg-surface p-4">
+                    <p className="text-xs uppercase tracking-wide text-text-neutral">
                       Complejidad
                     </p>
-                    <p className="mt-1 text-sm font-semibold text-neutral-900">
+                    <p className="mt-1 text-sm font-semibold text-text-strong">
                       {budget ? getComplexityLabel(budget.complexity) : "-"}
                     </p>
                   </div>
@@ -416,7 +416,7 @@ export default function NewBudgetPage() {
                 {budget ? (
                   <BudgetTotals subtotal={budget.subtotal} total={budget.total} />
                 ) : (
-                  <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-5 text-sm text-neutral-500">
+                  <div className="rounded-md border border-dashed border-primary-soft bg-surface p-5 text-sm text-text-neutral">
                     El resumen económico aparecerá cuando completes los datos base
                     del presupuesto.
                   </div>
@@ -424,33 +424,33 @@ export default function NewBudgetPage() {
               </div>
             </section>
 
-            <section className="rounded-2xl border border-neutral-200 bg-white shadow-sm">
-              <div className="border-b border-neutral-200 px-6 py-4">
-                <h2 className="text-lg font-semibold text-neutral-900">
+            <section className="rounded-lg border border-border bg-card-background shadow-sm">
+              <div className="border-b border-border px-4 py-3">
+                <h2 className="text-lg font-semibold text-text-strong">
                   Acciones
                 </h2>
               </div>
 
-              <div className="space-y-3 p-6">
+              <div className="space-y-3 p-4">
                 <button
                   onClick={() => setWizardOpen(true)}
                   type="button"
                   disabled={!budget}
-                  className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-800 transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:border-neutral-200 disabled:bg-neutral-100 disabled:text-neutral-400"
+                  className="w-full rounded-md border border-border bg-card-background px-4 py-2.5 text-sm font-medium text-text-strong transition hover:bg-surface disabled:cursor-not-allowed disabled:border-border disabled:bg-surface disabled:text-text-neutral/55"
                 >
                   Abrir selector guiado
                 </button>
 
                 <button
                   onClick={handleSaveDraft}
-                  className="w-full rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300"
+                  className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:bg-primary-soft"
                   type="button"
                   disabled={!canSave}
                 >
                   {isSaving ? "Guardando..." : "Guardar borrador"}
                 </button>
 
-                <p className="text-xs leading-5 text-neutral-500">
+                <p className="text-xs leading-5 text-text-neutral">
                   Solo podrás guardar cuando exista al menos una partida añadida.
                 </p>
               </div>

@@ -7,7 +7,7 @@ export default async function ClientsPage() {
   const clients = await getClientsByCompany(session.user.companyId)
 
   return (
-    <main className="p-8 space-y-6">
+    <main className="p-8 space-y-4">
       <h1 className="text-2xl font-bold">Clientes</h1>
 
       <CreateClientForm />
@@ -16,7 +16,7 @@ export default async function ClientsPage() {
         <h2 className="font-semibold mb-4">Listado</h2>
 
         {clients.length === 0 ? (
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-text-neutral">
             No hay clientes todavía.
           </p>
         ) : (

@@ -4,14 +4,34 @@
    Design Tokens — ES Group
    ========================= */
 :root {
-  /* Colores base */
-  --color-background: #ffffff;
-  --color-foreground: #000000;
-  --color-muted: #4b4b4b;
-  --color-surface: #f6f6f6;
+  /* Brand */
+  --color-primary: #f2600c;
+  --color-primary-strong: #f2490c;
+  --color-primary-soft: #f2a97e;
+
+  /* Surfaces */
+  --color-app-background: #f2f2f2;
+  --color-card-background: #ffffff;
   --color-border: #e5e5e5;
 
-  /* Tipografía */
+  /* Text */
+  --color-text-neutral: #595959;
+  --color-text-strong: #1f1f1f;
+
+  /* Backwards-compatible semantic aliases */
+  --color-background: var(--color-app-background);
+  --color-foreground: var(--color-text-strong);
+  --color-muted: var(--color-text-neutral);
+  --color-surface: var(--color-app-background);
+
+  /* Shape and effects */
+  --radius-control: 0.375rem;
+  --radius-card: 0.5rem;
+  --shadow-card: 0 1px 2px rgb(31 31 31 / 0.06),
+    0 8px 24px rgb(31 31 31 / 0.04);
+  --focus-ring: 0 0 0 3px rgb(242 96 12 / 0.22);
+
+  /* Typography */
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", Inter, Helvetica, Arial, sans-serif;
 }
@@ -19,8 +39,24 @@
 /* =========================
    Tailwind v4 theme bridge
    ========================= */
-/* Note: @theme rule removed to eliminate IDE error.
-   CSS variables are already defined in :root above */
+@theme inline {
+  --color-primary: #f2600c;
+  --color-primary-strong: #f2490c;
+  --color-primary-soft: #f2a97e;
+  --color-app-background: #f2f2f2;
+  --color-card-background: #ffffff;
+  --color-border: #e5e5e5;
+  --color-text-neutral: #595959;
+  --color-text-strong: #1f1f1f;
+  --color-background: #f2f2f2;
+  --color-foreground: #1f1f1f;
+  --color-muted: #595959;
+  --color-surface: #f2f2f2;
+  --radius-control: 0.375rem;
+  --radius-card: 0.5rem;
+  --shadow-card: 0 1px 2px rgb(31 31 31 / 0.06),
+    0 8px 24px rgb(31 31 31 / 0.04);
+}
 
 /* =========================
    Base styles

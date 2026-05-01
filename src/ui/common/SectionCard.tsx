@@ -22,19 +22,23 @@ export default function SectionCard({
   return (
     <section
       className={[
-        "rounded-2xl border border-neutral-200 bg-white shadow-sm",
+        "rounded-lg border border-[#dedbd6] bg-[#fbfaf7] shadow-[0_1px_2px_rgba(31,31,31,0.04)]",
         className,
       ].join(" ")}
     >
       {hasHeader ? (
-        <div className="flex flex-col gap-3 border-b border-neutral-200 px-6 py-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-2 border-b border-border px-4 py-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
             {title ? (
-              <h2 className="text-lg font-semibold text-neutral-900">{title}</h2>
+              <h2 className="text-base font-semibold text-text-strong">
+                {title}
+              </h2>
             ) : null}
 
             {description ? (
-              <p className="text-sm text-neutral-500">{description}</p>
+              <p className="text-sm leading-5 text-text-neutral">
+                {description}
+              </p>
             ) : null}
           </div>
 
@@ -42,7 +46,7 @@ export default function SectionCard({
         </div>
       ) : null}
 
-      <div className={["p-6", contentClassName].join(" ")}>{children}</div>
+      <div className={["p-4", contentClassName].join(" ")}>{children}</div>
     </section>
   );
 }

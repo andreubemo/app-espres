@@ -14,21 +14,23 @@ export default function PageHeader({
   actions,
 }: PageHeaderProps) {
   return (
-    <header className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="space-y-2">
+    <header className="rounded-lg border border-[#dedbd6] bg-[#fbfaf7] p-4 shadow-[0_1px_2px_rgba(31,31,31,0.04)]">
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div className="space-y-1">
           {eyebrow ? (
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-neutral-500">
+            <p className="text-xs font-semibold uppercase text-primary">
               {eyebrow}
             </p>
           ) : null}
 
-          <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">
+          <h1 className="text-xl font-semibold tracking-tight text-text-strong sm:text-2xl">
             {title}
           </h1>
 
           {description ? (
-            <p className="max-w-2xl text-sm text-neutral-600">{description}</p>
+            <p className="max-w-2xl text-sm leading-5 text-text-neutral">
+              {description}
+            </p>
           ) : null}
         </div>
 

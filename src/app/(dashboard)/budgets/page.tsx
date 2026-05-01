@@ -1,16 +1,15 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { getServerSession } from "next-auth";
-
-import { authOptions } from "@/lib/auth";
+import { getInternalUserContext } from "@/lib/access-control";
 import { prisma } from "@/lib/prisma";
 
 import PageHeader from "@/ui/common/PageHeader";
 import SectionCard from "@/ui/common/SectionCard";
 import StatusBadge from "@/ui/common/StatusBadge";
-import StatCard from "@/ui/common/StatCard";
+import BudgetListActions from "@/ui/budgets/BudgetListActions";
 import BudgetsFiltersBar from "@/ui/budgets/BudgetsFiltersBar";
+import { Badge } from "@/ui/primitives/Badge";
+import { Card } from "@/ui/primitives/Card";
 
 type StoredBudgetLine = {
   id?: string;
@@ -132,14 +131,29 @@ function matchesSearch(value: string, query: string) {
   return value.toLowerCase().includes(query.toLowerCase());
 }
 
-export default async function BudgetsPage({ searchParams }: PageProps) {
-  const session = await getServerSession(authOptions);
+function CompactMetric({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <div className="min-w-[128px] rounded-md border border-[#e2ded8] bg-[#f4f2ef] px-2.5 py-1.5">
+      <p className="text-[10px] font-semibold uppercase leading-4 text-[#5f5a52]">
+        {label}
+      </p>
+      <p className="truncate text-sm font-semibold leading-5 text-text-strong">
+        {value}
+      </p>
+    </div>
+  );
+}
 
-  if (
-    !session?.user?.id ||
-    !session.user.companyId ||
-    session.user.type !== "USER"
-  ) {
+export default async function BudgetsPage({ searchParams }: PageProps) {
+  const user = await getInternalUserContext();
+
+  if (!user) {
     redirect("/login");
   }
 
@@ -149,7 +163,7 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
 
   const budgets = await prisma.budget.findMany({
     where: {
-      companyId: session.user.companyId,
+      companyId: user.companyId,
     },
     include: {
       client: true,
@@ -187,10 +201,10 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
   });
 
   return (
-    <main className="min-h-screen bg-neutral-50">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-6 py-6 lg:px-8">
+    <main className="min-h-screen bg-surface">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-6 lg:px-8">
         <PageHeader
-          eyebrow="Gestión de presupuestos"
+          eyebrow={"Gesti\u00f3n de presupuestos"}
           title="Presupuestos"
           description="Borradores y presupuestos guardados de tu empresa."
         />
@@ -204,23 +218,23 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
         </SectionCard>
 
         {filteredBudgets.length === 0 ? (
-          <SectionCard className="border-dashed border-neutral-300">
+          <SectionCard className="border-dashed border-primary-soft">
             <div className="mx-auto max-w-md space-y-2 text-center">
-              <h2 className="text-lg font-semibold text-neutral-900">
+              <h2 className="text-lg font-semibold text-text-strong">
                 {q || status
                   ? "No se han encontrado presupuestos"
-                  : "No hay presupuestos todavía"}
+                  : "No hay presupuestos todav\u00eda"}
               </h2>
 
-              <p className="text-sm text-neutral-500">
+              <p className="text-sm text-text-neutral">
                 {q || status
-                  ? "Prueba a cambiar la búsqueda o limpiar los filtros actuales."
-                  : "Cuando guardes tu primer presupuesto aparecerá aquí con su total, cliente, estado y acceso directo al detalle."}
+                  ? "Prueba a cambiar la b\u00fasqueda o limpiar los filtros actuales."
+                  : "Cuando guardes tu primer presupuesto aparecer\u00e1 aqu\u00ed con su total, cliente, estado y acceso directo al detalle."}
               </p>
             </div>
           </SectionCard>
         ) : (
-          <section className="space-y-4">
+          <section className="space-y-3">
             {filteredBudgets.map((budget) => {
               const latestVersion = budget.versions[0];
               const data = (latestVersion?.data ?? {}) as StoredBudgetData;
@@ -228,10 +242,6 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
 
               const surfaceM2 = Number.isFinite(data.dimensions?.surfaceM2)
                 ? Number(data.dimensions?.surfaceM2)
-                : 0;
-
-              const perimeterML = Number.isFinite(data.dimensions?.perimeterML)
-                ? Number(data.dimensions?.perimeterML)
                 : 0;
 
               const lineCount = lines.length;
@@ -245,83 +255,83 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
               const codeLabel = data.code?.trim() || budget.reference;
 
               return (
-                <Link
+                <Card
                   key={budget.id}
-                  href={`/budgets/${budget.id}`}
-                  className="group block rounded-2xl border border-neutral-200 bg-white shadow-sm transition hover:border-neutral-300 hover:shadow-md"
+                  className="group transition hover:border-[#c9c2b8] hover:shadow-[0_2px_4px_rgba(31,31,31,0.06),0_14px_30px_rgba(31,31,31,0.06)]"
+                  padding="none"
+                  variant="elevated"
                 >
-                  <article className="space-y-5 p-6">
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                      <div className="min-w-0 space-y-3">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h2 className="text-lg font-semibold text-neutral-900 transition group-hover:text-neutral-700">
+                  <article className="space-y-3 p-3 sm:p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 space-y-2">
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
+                          <h2 className="text-lg font-semibold text-[#24211f]">
                             {codeLabel}
                           </h2>
 
                           <StatusBadge status={budget.status} />
 
-                          <span className="inline-flex items-center rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-xs font-medium text-neutral-700">
+                          <Badge variant="neutral">
                             v{latestVersion?.version ?? 1}
-                          </span>
+                          </Badge>
                         </div>
 
-                        <div className="space-y-1">
-                          <p className="text-sm text-neutral-600">
+                        <div className="grid gap-x-4 gap-y-1 text-sm leading-5 text-text-neutral sm:grid-cols-2 xl:flex xl:flex-wrap">
+                          <p className="min-w-0">
                             Proyecto:{" "}
-                            <strong className="font-semibold text-neutral-900">
+                            <strong className="font-semibold text-text-strong">
                               {projectLabel}
                             </strong>
                           </p>
 
-                          <p className="text-sm text-neutral-600">
+                          <p className="min-w-0">
                             Cliente:{" "}
-                            <strong className="font-semibold text-neutral-900">
+                            <strong className="font-semibold text-text-strong">
                               {clientLabel}
                             </strong>
                           </p>
 
-                          <p className="text-sm text-neutral-500">
+                          <p>
                             {lineCount}{" "}
                             {lineCount === 1 ? "partida" : "partidas"}
                           </p>
                         </div>
                       </div>
 
-                      <div className="shrink-0 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-left lg:min-w-[180px] lg:text-right">
-                        <p className="text-xs uppercase tracking-wide text-neutral-500">
-                          Total
-                        </p>
-                        <p className="mt-1 text-2xl font-semibold tracking-tight text-neutral-900">
-                          {formatCurrency(total)}
-                        </p>
+                      <div className="shrink-0">
+                        <BudgetListActions
+                          budgetId={budget.id}
+                          reference={codeLabel}
+                        />
                       </div>
                     </div>
 
-                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-                      <StatCard label="Fecha" value={formatDate(data.date)} />
+                    <div className="flex flex-wrap items-stretch gap-2 border-t border-border pt-3">
+                      <div className="min-w-[156px] rounded-md border border-[#d8d3cc] bg-[#f4f2ef] px-3 py-1.5">
+                        <p className="text-[10px] font-semibold uppercase leading-4 text-[#5f5a52]">
+                          Total
+                        </p>
+                        <p className="text-lg font-semibold leading-6 text-text-strong">
+                          {formatCurrency(total)}
+                        </p>
+                      </div>
+                      <CompactMetric
+                        label="Fecha"
+                        value={formatDate(data.date)}
+                      />
 
-                      <StatCard
+                      <CompactMetric
                         label="Complejidad"
                         value={formatComplexity(data.complexity)}
                       />
 
-                      <StatCard
+                      <CompactMetric
                         label="Superficie"
-                        value={`${formatNumber(surfaceM2)} m²`}
-                      />
-
-                      <StatCard
-                        label="Perímetro"
-                        value={`${formatNumber(perimeterML)} ml`}
-                      />
-
-                      <StatCard
-                        label="Referencia"
-                        value={budget.reference}
+                        value={`${formatNumber(surfaceM2)} m\u00b2`}
                       />
                     </div>
                   </article>
-                </Link>
+                </Card>
               );
             })}
           </section>

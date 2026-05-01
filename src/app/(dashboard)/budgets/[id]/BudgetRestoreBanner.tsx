@@ -44,7 +44,7 @@ export default function BudgetRestoreBanner({
   }
 
   return (
-    <section className="rounded-2xl border border-emerald-200 bg-emerald-50 px-6 py-4 shadow-sm">
+    <section className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <p className="text-sm font-semibold text-emerald-800">
@@ -58,7 +58,7 @@ export default function BudgetRestoreBanner({
         <button
           type="button"
           onClick={removeRestoreParams}
-          className="rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs font-medium text-emerald-800 transition hover:bg-emerald-100"
+          className="rounded-lg border border-emerald-200 bg-card-background px-3 py-1.5 text-xs font-medium text-emerald-800 transition hover:bg-emerald-100"
         >
           Cerrar
         </button>

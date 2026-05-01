@@ -55,11 +55,11 @@ export default function BudgetDetailActions({
 
   if (isHistoricalView) {
     return (
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
+      <div className="rounded-md border border-primary-soft bg-primary-soft/20 p-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-primary-strong">
           Modo solo lectura
         </p>
-        <p className="mt-2 text-sm text-amber-800">
+        <p className="mt-2 text-sm text-primary-strong">
           Estás visualizando la versión histórica
           {typeof viewedVersionNumber === "number" ? ` v${viewedVersionNumber}` : ""}
           . Las acciones sobre el presupuesto actual están desactivadas en esta
@@ -72,7 +72,7 @@ export default function BudgetDetailActions({
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+        <p className="text-xs font-semibold uppercase tracking-wide text-text-neutral">
           Acciones
         </p>
       </div>
@@ -82,7 +82,7 @@ export default function BudgetDetailActions({
           type="button"
           onClick={handleCreateNewVersion}
           disabled={isPending || !canCreateNewVersion}
-          className="rounded-xl bg-black px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300"
+          className="rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:bg-primary-soft"
         >
           {isPending ? "Procesando..." : "Nueva versión"}
         </button>
@@ -91,7 +91,7 @@ export default function BudgetDetailActions({
           type="button"
           onClick={handleMarkAsSent}
           disabled={isPending || !canMarkAsSent}
-          className="rounded-xl border border-blue-200 bg-blue-50 px-5 py-2.5 text-sm font-medium text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:border-neutral-200 disabled:bg-neutral-100 disabled:text-neutral-400"
+          className="rounded-md border border-primary-soft bg-primary-soft/20 px-5 py-2.5 text-sm font-medium text-primary-strong transition hover:bg-primary-soft/30 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface disabled:text-text-neutral/55"
         >
           {isPending ? "Procesando..." : "Marcar como enviado"}
         </button>
@@ -100,13 +100,13 @@ export default function BudgetDetailActions({
           type="button"
           onClick={handleDuplicate}
           disabled={isPending || !canDuplicate}
-          className="rounded-xl border border-neutral-200 bg-white px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:border-neutral-200 disabled:bg-neutral-100 disabled:text-neutral-400"
+          className="rounded-md border border-border bg-card-background px-5 py-2.5 text-sm font-medium text-text-neutral transition hover:bg-surface disabled:cursor-not-allowed disabled:border-border disabled:bg-surface disabled:text-text-neutral/55"
         >
           {isPending ? "Procesando..." : "Duplicar"}
         </button>
       </div>
 
-      <div className="grid gap-3 text-xs text-neutral-500 md:grid-cols-3">
+      <div className="grid gap-3 text-xs text-text-neutral md:grid-cols-3">
         <p>
           Crea una nueva versión del presupuesto actual para seguir trabajando
           sin perder trazabilidad.

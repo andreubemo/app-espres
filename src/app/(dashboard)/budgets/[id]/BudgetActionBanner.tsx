@@ -14,11 +14,11 @@ function getToneClasses(tone: BudgetActionBannerProps["tone"]) {
   switch (tone) {
     case "info":
       return {
-        wrapper: "border-blue-200 bg-blue-50",
-        title: "text-blue-800",
-        text: "text-blue-700",
+        wrapper: "border-primary-soft bg-primary-soft/20",
+        title: "text-primary-strong",
+        text: "text-primary-strong",
         button:
-          "border-blue-200 bg-white text-blue-800 hover:bg-blue-100",
+          "border-primary-soft bg-card-background text-primary-strong hover:bg-primary-soft/30",
       };
     case "success":
     default:
@@ -27,7 +27,7 @@ function getToneClasses(tone: BudgetActionBannerProps["tone"]) {
         title: "text-emerald-800",
         text: "text-emerald-700",
         button:
-          "border-emerald-200 bg-white text-emerald-800 hover:bg-emerald-100",
+          "border-emerald-200 bg-card-background text-emerald-800 hover:bg-emerald-100",
       };
   }
 }
@@ -74,7 +74,7 @@ export default function BudgetActionBanner({
 
   return (
     <section
-      className={`rounded-2xl border px-6 py-4 shadow-sm ${toneClasses.wrapper}`}
+      className={`rounded-lg border px-4 py-3 shadow-sm ${toneClasses.wrapper}`}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
