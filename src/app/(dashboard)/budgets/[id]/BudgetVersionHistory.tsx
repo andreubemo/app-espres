@@ -50,16 +50,16 @@ function getVersionBadgeClasses(
   isBusy: boolean
 ) {
   if (version.isCurrent) {
-    return "border-neutral-900 bg-neutral-900 text-white";
+    return "border-primary bg-primary text-white";
   }
 
   if (version.sent) {
-    return "border-blue-200 bg-blue-50 text-blue-700";
+    return "border-primary-soft bg-primary-soft/20 text-primary-strong";
   }
 
   return isBusy
-    ? "border-neutral-200 bg-neutral-100 text-neutral-400"
-    : "border-neutral-200 bg-neutral-50 text-neutral-700";
+    ? "border-border bg-surface text-text-neutral/55"
+    : "border-border bg-surface text-text-neutral";
 }
 
 export default function BudgetVersionHistory({
@@ -94,19 +94,19 @@ export default function BudgetVersionHistory({
   }
 
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-white shadow-sm">
-      <div className="border-b border-neutral-200 px-6 py-4">
-        <h2 className="text-lg font-semibold text-neutral-900">
+    <div className="rounded-lg border border-border bg-card-background shadow-sm">
+      <div className="border-b border-border px-4 py-3">
+        <h2 className="text-lg font-semibold text-text-strong">
           Historial de versiones
         </h2>
-        <p className="mt-1 text-sm text-neutral-500">
+        <p className="mt-1 text-sm text-text-neutral">
           Consulta versiones anteriores o restaura una versión como nueva.
         </p>
       </div>
 
-      <div className="p-6">
+      <div className="p-4">
         {versions.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 p-6 text-sm text-neutral-500">
+          <div className="rounded-md border border-dashed border-primary-soft bg-surface p-4 text-sm text-text-neutral">
             Este presupuesto todavía no tiene historial de versiones.
           </div>
         ) : (
@@ -118,7 +118,7 @@ export default function BudgetVersionHistory({
               return (
                 <article
                   key={version.id}
-                  className="rounded-xl border border-neutral-200 bg-neutral-50 p-4"
+                  className="rounded-md border border-border bg-surface p-4"
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="space-y-2">
@@ -133,34 +133,34 @@ export default function BudgetVersionHistory({
                         </span>
 
                         {version.isCurrent && (
-                          <span className="inline-flex items-center rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs font-medium text-neutral-700">
+                          <span className="inline-flex items-center rounded-full border border-border bg-card-background px-3 py-1 text-xs font-medium text-text-neutral">
                             Versión actual
                           </span>
                         )}
 
                         {version.sent && (
-                          <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+                          <span className="inline-flex items-center rounded-full border border-primary-soft bg-primary-soft/20 px-3 py-1 text-xs font-medium text-primary-strong">
                             Enviada
                           </span>
                         )}
 
                         {isViewed && !version.isCurrent && (
-                          <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+                          <span className="inline-flex items-center rounded-full border border-primary-soft bg-primary-soft/20 px-3 py-1 text-xs font-medium text-primary-strong">
                             Visualizada
                           </span>
                         )}
                       </div>
 
-                      <div className="text-sm text-neutral-600">
+                      <div className="text-sm text-text-neutral">
                         <p>
                           Creada:{" "}
-                          <span className="font-medium text-neutral-900">
+                          <span className="font-medium text-text-strong">
                             {formatDateTime(version.createdAt)}
                           </span>
                         </p>
                         <p>
                           Proyecto:{" "}
-                          <span className="font-medium text-neutral-900">
+                          <span className="font-medium text-text-strong">
                             {version.project || "Sin nombre"}
                           </span>
                         </p>
@@ -169,20 +169,20 @@ export default function BudgetVersionHistory({
 
                     <div className="flex flex-col gap-3 lg:min-w-[320px]">
                       <div className="grid gap-2 sm:grid-cols-2">
-                        <div className="rounded-lg border border-neutral-200 bg-white p-3">
-                          <p className="text-xs uppercase tracking-wide text-neutral-500">
+                        <div className="rounded-lg border border-border bg-card-background p-3">
+                          <p className="text-xs uppercase tracking-wide text-text-neutral">
                             Partidas
                           </p>
-                          <p className="mt-1 text-sm font-semibold text-neutral-900">
+                          <p className="mt-1 text-sm font-semibold text-text-strong">
                             {version.lineCount}
                           </p>
                         </div>
 
-                        <div className="rounded-lg border border-neutral-200 bg-white p-3">
-                          <p className="text-xs uppercase tracking-wide text-neutral-500">
+                        <div className="rounded-lg border border-border bg-card-background p-3">
+                          <p className="text-xs uppercase tracking-wide text-text-neutral">
                             Total
                           </p>
-                          <p className="mt-1 text-sm font-semibold text-neutral-900">
+                          <p className="mt-1 text-sm font-semibold text-text-strong">
                             {formatCurrency(version.total)}
                           </p>
                         </div>
@@ -193,7 +193,7 @@ export default function BudgetVersionHistory({
                           type="button"
                           onClick={() => handleViewVersion(version.version)}
                           disabled={isPending}
-                          className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-800 transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:border-neutral-200 disabled:bg-neutral-100 disabled:text-neutral-400"
+                          className="w-full rounded-md border border-border bg-card-background px-4 py-2.5 text-sm font-medium text-text-strong transition hover:bg-surface disabled:cursor-not-allowed disabled:border-border disabled:bg-surface disabled:text-text-neutral/55"
                         >
                           {version.isCurrent
                             ? "Ver versión actual"
@@ -206,7 +206,7 @@ export default function BudgetVersionHistory({
                           type="button"
                           onClick={() => handleRestore(version.id)}
                           disabled={!canRestore}
-                          className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-800 transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:border-neutral-200 disabled:bg-neutral-100 disabled:text-neutral-400"
+                          className="w-full rounded-md border border-border bg-card-background px-4 py-2.5 text-sm font-medium text-text-strong transition hover:bg-surface disabled:cursor-not-allowed disabled:border-border disabled:bg-surface disabled:text-text-neutral/55"
                         >
                           {version.isCurrent
                             ? "Versión actual"

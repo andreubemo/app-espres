@@ -49,11 +49,11 @@ function LoginForm() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50 p-6">
-      <div className="w-full max-w-md rounded-xl border bg-white p-6 shadow-sm">
+    <main className="flex min-h-screen items-center justify-center bg-app-background p-4">
+      <div className="w-full max-w-md rounded-md border border-border border-t-2 border-t-primary bg-card-background p-4 shadow-sm">
         <div className="mb-6">
           <h1 className="text-2xl font-bold">Iniciar sesión</h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-text-neutral">
             Accede con tu usuario interno para guardar y gestionar presupuestos.
           </p>
         </div>
@@ -67,7 +67,7 @@ function LoginForm() {
               id="email"
               type="email"
               autoComplete="email"
-              className="w-full rounded border px-3 py-2 outline-none focus:border-black"
+              className="w-full rounded border px-3 py-2 outline-none focus:border-primary"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="tu@email.com"
@@ -86,7 +86,7 @@ function LoginForm() {
               id="password"
               type="password"
               autoComplete="current-password"
-              className="w-full rounded border px-3 py-2 outline-none focus:border-black"
+              className="w-full rounded border px-3 py-2 outline-none focus:border-primary"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="********"
@@ -103,7 +103,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full rounded bg-black px-4 py-2 text-white disabled:opacity-50"
+            className="w-full rounded bg-primary px-4 py-2 text-white transition hover:bg-primary-strong disabled:opacity-50"
           >
             {isLoading ? "Entrando..." : "Entrar"}
           </button>
@@ -115,9 +115,9 @@ function LoginForm() {
 
 function LoginFallback() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50 p-6">
-      <div className="w-full max-w-md rounded-xl border bg-white p-6 shadow-sm">
-        <p className="text-sm text-gray-600">Cargando formulario de acceso...</p>
+    <main className="flex min-h-screen items-center justify-center bg-app-background p-4">
+      <div className="w-full max-w-md rounded-md border border-border border-t-2 border-t-primary bg-card-background p-4 shadow-sm">
+        <p className="text-sm text-text-neutral">Cargando formulario de acceso...</p>
       </div>
     </main>
   );

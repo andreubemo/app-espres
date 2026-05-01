@@ -28,20 +28,20 @@ export default function BudgetHeader({
   totalLabel,
 }: BudgetHeaderProps) {
   return (
-    <section className="rounded-2xl border border-neutral-200 bg-white shadow-sm">
-      <div className="space-y-6 p-4 sm:p-6">
-        <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+    <section className="rounded-lg border border-border bg-card-background shadow-sm">
+      <div className="space-y-4 p-4 sm:p-4">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="space-y-3">
             <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-neutral-500">
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-text-neutral">
                 Detalle de presupuesto
               </p>
 
-              <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">
+              <h1 className="text-2xl font-semibold tracking-tight text-text-strong sm:text-3xl">
                 {headerCode}
               </h1>
 
-              <p className="text-sm text-neutral-600">
+              <p className="text-sm text-text-neutral">
                 Proyecto: {projectName}
               </p>
             </div>
@@ -49,20 +49,20 @@ export default function BudgetHeader({
             <div className="flex flex-wrap gap-2">
               <StatusBadge status={status} />
 
-              <span className="inline-flex items-center rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs font-medium text-neutral-700">
+              <span className="inline-flex items-center rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-text-neutral">
                 Cliente: {clientName}
               </span>
 
-              <span className="inline-flex items-center rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs font-medium text-neutral-700">
+              <span className="inline-flex items-center rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-text-neutral">
                 v{viewedVersionNumber}
               </span>
 
               {!isHistoricalView ? (
-                <span className="inline-flex items-center rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs font-medium text-neutral-700">
+                <span className="inline-flex items-center rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-text-neutral">
                   Versión actual
                 </span>
               ) : (
-                <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+                <span className="inline-flex items-center rounded-full border border-primary-soft bg-primary-soft/20 px-3 py-1 text-xs font-medium text-primary-strong">
                   Solo lectura
                 </span>
               )}
@@ -83,7 +83,7 @@ export default function BudgetHeader({
           </div>
         </div>
 
-        <div className="border-t border-neutral-200 pt-6">
+        <div className="border-t border-border pt-6">
           <BudgetDetailActions
             budgetId={budgetId}
             status={status}

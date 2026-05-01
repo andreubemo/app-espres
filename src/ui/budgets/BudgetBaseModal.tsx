@@ -82,38 +82,38 @@ export default function BudgetBaseModal({
   if (!open) return null;
 
   return (
-    <section className="rounded-2xl border border-neutral-200 bg-white shadow-sm">
-      <div className="space-y-6 p-4 sm:p-6 xl:p-8">
-        <div className="space-y-4 border-b border-neutral-200 pb-6">
+    <section className="rounded-lg border border-border bg-card-background shadow-sm">
+      <div className="space-y-4 p-4 sm:p-4 xl:p-8">
+        <div className="space-y-4 border-b border-border pb-6">
           <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-neutral-500">
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-text-neutral">
               Paso 1 de 3
             </p>
 
-            <h2 className="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">
+            <h2 className="text-2xl font-semibold tracking-tight text-text-strong sm:text-3xl">
               Define la base del presupuesto
             </h2>
 
-            <p className="max-w-3xl text-sm text-neutral-600 sm:text-base">
+            <p className="max-w-3xl text-sm text-text-neutral sm:text-base">
               Introduce el contexto inicial del proyecto antes de pasar al
               selector guiado de partidas. Este paso debe dejar bien definida la
               referencia, las dimensiones y el nivel de complejidad.
             </p>
           </div>
 
-          <div className="h-2 overflow-hidden rounded-full bg-neutral-100">
-            <div className="h-full w-1/3 rounded-full bg-neutral-900" />
+          <div className="h-2 overflow-hidden rounded-full bg-surface">
+            <div className="h-full w-1/3 rounded-full bg-primary" />
           </div>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_360px]">
-          <div className="space-y-6 min-w-0">
-            <section className="rounded-2xl border border-neutral-200 bg-white p-4 sm:p-5">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_360px]">
+          <div className="space-y-4 min-w-0">
+            <section className="rounded-lg border border-border bg-card-background p-4 sm:p-5">
               <div className="mb-4">
-                <h3 className="text-base font-semibold text-neutral-900">
+                <h3 className="text-base font-semibold text-text-strong">
                   Identificación
                 </h3>
-                <p className="mt-1 text-sm text-neutral-500">
+                <p className="mt-1 text-sm text-text-neutral">
                   Estos datos te ayudarán a localizar y entender el presupuesto
                   más adelante.
                 </p>
@@ -121,11 +121,11 @@ export default function BudgetBaseModal({
 
               <div className="grid gap-4">
                 <label className="space-y-1.5">
-                  <span className="text-sm font-medium text-neutral-700">
+                  <span className="text-sm font-medium text-text-neutral">
                     Código
                   </span>
                   <input
-                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-neutral-900 outline-none transition focus:border-neutral-400"
+                    className="w-full rounded-md border border-border bg-card-background px-3 py-2.5 text-text-strong outline-none transition focus:border-primary"
                     placeholder="Ej. STAND-2026-014"
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
@@ -139,11 +139,11 @@ export default function BudgetBaseModal({
                 </label>
 
                 <label className="space-y-1.5">
-                  <span className="text-sm font-medium text-neutral-700">
+                  <span className="text-sm font-medium text-text-neutral">
                     Proyecto
                   </span>
                   <input
-                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-neutral-900 outline-none transition focus:border-neutral-400"
+                    className="w-full rounded-md border border-border bg-card-background px-3 py-2.5 text-text-strong outline-none transition focus:border-primary"
                     placeholder="Ej. Stand feria madera Barcelona"
                     value={project}
                     onChange={(e) => setProject(e.target.value)}
@@ -157,12 +157,12 @@ export default function BudgetBaseModal({
                 </label>
 
                 <label className="space-y-1.5">
-                  <span className="text-sm font-medium text-neutral-700">
+                  <span className="text-sm font-medium text-text-neutral">
                     Fecha
                   </span>
                   <input
                     type="date"
-                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-neutral-900 outline-none transition focus:border-neutral-400"
+                    className="w-full rounded-md border border-border bg-card-background px-3 py-2.5 text-text-strong outline-none transition focus:border-primary"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
                     onKeyDown={(e) => {
@@ -176,12 +176,12 @@ export default function BudgetBaseModal({
               </div>
             </section>
 
-            <section className="rounded-2xl border border-neutral-200 bg-white p-4 sm:p-5">
+            <section className="rounded-lg border border-border bg-card-background p-4 sm:p-5">
               <div className="mb-4">
-                <h3 className="text-base font-semibold text-neutral-900">
+                <h3 className="text-base font-semibold text-text-strong">
                   Dimensiones y complejidad
                 </h3>
-                <p className="mt-1 text-sm text-neutral-500">
+                <p className="mt-1 text-sm text-text-neutral">
                   La superficie y el perímetro se calculan automáticamente a
                   partir del ancho y el largo.
                 </p>
@@ -189,14 +189,14 @@ export default function BudgetBaseModal({
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="space-y-1.5">
-                  <span className="text-sm font-medium text-neutral-700">
+                  <span className="text-sm font-medium text-text-neutral">
                     Ancho (m)
                   </span>
                   <input
                     type="number"
                     min={0}
                     step="0.01"
-                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-neutral-900 outline-none transition focus:border-neutral-400"
+                    className="w-full rounded-md border border-border bg-card-background px-3 py-2.5 text-text-strong outline-none transition focus:border-primary"
                     placeholder="Ej. 5"
                     value={width}
                     onChange={(e) =>
@@ -215,14 +215,14 @@ export default function BudgetBaseModal({
                 </label>
 
                 <label className="space-y-1.5">
-                  <span className="text-sm font-medium text-neutral-700">
+                  <span className="text-sm font-medium text-text-neutral">
                     Largo (m)
                   </span>
                   <input
                     type="number"
                     min={0}
                     step="0.01"
-                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-neutral-900 outline-none transition focus:border-neutral-400"
+                    className="w-full rounded-md border border-border bg-card-background px-3 py-2.5 text-text-strong outline-none transition focus:border-primary"
                     placeholder="Ej. 4"
                     value={length}
                     onChange={(e) =>
@@ -243,11 +243,11 @@ export default function BudgetBaseModal({
 
               <div className="mt-4">
                 <label className="space-y-1.5">
-                  <span className="text-sm font-medium text-neutral-700">
+                  <span className="text-sm font-medium text-text-neutral">
                     Complejidad
                   </span>
                   <select
-                    className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-neutral-900 outline-none transition focus:border-neutral-400"
+                    className="w-full rounded-md border border-border bg-card-background px-3 py-2.5 text-text-strong outline-none transition focus:border-primary"
                     value={complexity}
                     onChange={(e) =>
                       setComplexity(e.target.value as BudgetComplexity)
@@ -268,48 +268,48 @@ export default function BudgetBaseModal({
             </section>
           </div>
 
-          <aside className="space-y-6 xl:sticky xl:top-4 xl:self-start">
-            <section className="rounded-2xl border border-neutral-200 bg-white shadow-sm">
-              <div className="border-b border-neutral-200 px-4 py-3">
-                <h3 className="text-base font-semibold text-neutral-900">
+          <aside className="space-y-4 xl:sticky xl:top-4 xl:self-start">
+            <section className="rounded-lg border border-border bg-card-background shadow-sm">
+              <div className="border-b border-border px-4 py-3">
+                <h3 className="text-base font-semibold text-text-strong">
                   Resumen inicial
                 </h3>
               </div>
 
               <div className="space-y-3 p-4">
-                <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-neutral-500">
+                <div className="rounded-md border border-border bg-surface p-4">
+                  <p className="text-xs uppercase tracking-wide text-text-neutral">
                     Superficie
                   </p>
-                  <p className="mt-1 text-2xl font-semibold tracking-tight text-neutral-900">
+                  <p className="mt-1 text-2xl font-semibold tracking-tight text-text-strong">
                     {formatNumber(surfaceM2)} m²
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-neutral-500">
+                <div className="rounded-md border border-border bg-surface p-4">
+                  <p className="text-xs uppercase tracking-wide text-text-neutral">
                     Perímetro
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-neutral-900">
+                  <p className="mt-1 text-sm font-semibold text-text-strong">
                     {formatNumber(perimeterML)} ml
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-                  <p className="text-xs uppercase tracking-wide text-neutral-500">
+                <div className="rounded-md border border-border bg-surface p-4">
+                  <p className="text-xs uppercase tracking-wide text-text-neutral">
                     Complejidad
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-neutral-900">
+                  <p className="mt-1 text-sm font-semibold text-text-strong">
                     {getComplexityLabel(complexity)}
                   </p>
                 </div>
               </div>
             </section>
 
-            <section className="rounded-2xl border border-neutral-200 bg-white shadow-sm">
+            <section className="rounded-lg border border-border bg-card-background shadow-sm">
               <div className="space-y-3 p-4">
                 <button
-                  className="w-full rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300"
+                  className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:bg-primary-soft"
                   onClick={handleSubmit}
                   disabled={!isValid}
                   type="button"
@@ -317,7 +317,7 @@ export default function BudgetBaseModal({
                   Crear presupuesto y continuar
                 </button>
 
-                <p className="text-xs leading-5 text-neutral-500">
+                <p className="text-xs leading-5 text-text-neutral">
                   Al continuar se abrirá el selector guiado de partidas.
                 </p>
               </div>

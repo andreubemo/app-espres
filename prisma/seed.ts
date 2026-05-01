@@ -26,12 +26,14 @@ async function main() {
     update: {
       password: passwordHash,
       role: Role.OWNER,
+      active: true,
       companyId: company.id,
     },
     create: {
       email: "owner@espres.com",
       password: passwordHash,
       role: Role.OWNER,
+      active: true,
       companyId: company.id,
     },
   });

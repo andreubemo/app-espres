@@ -45,7 +45,7 @@ export default function BudgetSectionNav() {
   }, []);
 
   return (
-    <div className="sticky z-20 rounded-2xl border border-neutral-200 bg-white/95 p-2 shadow-sm backdrop-blur xl:top-[calc(var(--app-header-height)+8px)]">
+    <div className="sticky z-20 rounded-lg border border-border bg-card-background/95 p-2 shadow-sm backdrop-blur xl:top-[calc(var(--app-header-height)+8px)]">
       <div className="flex gap-2 overflow-x-auto scroll-smooth">
         {sections.map((section) => {
           const isActive = activeSection === section.id;
@@ -56,10 +56,10 @@ export default function BudgetSectionNav() {
               href={`#${section.id}`}
               aria-current={isActive ? "true" : undefined}
               className={[
-                "inline-flex shrink-0 items-center rounded-xl px-4 py-2 text-sm font-medium transition-colors",
+                "inline-flex shrink-0 items-center rounded-md px-4 py-2 text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-neutral-900 text-white shadow-sm"
-                  : "border border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-300 hover:bg-neutral-100 hover:text-neutral-900",
+                  ? "bg-primary text-white shadow-sm"
+                  : "border border-border bg-surface text-text-neutral hover:border-primary-soft hover:bg-surface hover:text-text-strong",
               ].join(" ")}
             >
               {section.label}

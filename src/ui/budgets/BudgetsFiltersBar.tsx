@@ -14,16 +14,16 @@ export default function BudgetsFiltersBar({
   const hasActiveFilters = Boolean(defaultQuery || defaultStatus);
 
   return (
-    <section className="rounded-2xl border border-neutral-200 bg-white px-5 py-4 shadow-sm">
-      <form method="GET" className="flex flex-col gap-3">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+    <section className="rounded-lg border border-border bg-card-background px-3 py-3 shadow-sm">
+      <form method="GET" className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 xl:flex-row xl:items-center">
           <div className="min-w-0 flex-1">
             <input
               type="text"
               name="q"
               defaultValue={defaultQuery}
               placeholder="Buscar por código, proyecto, cliente o referencia"
-              className="w-full rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-900 outline-none transition focus:border-neutral-400 focus:bg-white"
+              className="h-9 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-strong outline-none transition focus:border-primary focus:bg-card-background focus:ring-4 focus:ring-primary/20"
             />
           </div>
 
@@ -31,7 +31,7 @@ export default function BudgetsFiltersBar({
             <select
               name="status"
               defaultValue={defaultStatus}
-              className="w-full rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-900 outline-none transition focus:border-neutral-400 focus:bg-white"
+              className="h-9 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-strong outline-none transition focus:border-primary focus:bg-card-background focus:ring-4 focus:ring-primary/20"
             >
               <option value="">Todos los estados</option>
               <option value="DRAFT">Borrador</option>
@@ -42,10 +42,10 @@ export default function BudgetsFiltersBar({
             </select>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 xl:shrink-0">
+          <div className="flex flex-wrap items-center gap-2 xl:shrink-0">
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-800 transition hover:bg-neutral-100"
+              className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary-strong"
             >
               Aplicar
             </button>
@@ -53,13 +53,13 @@ export default function BudgetsFiltersBar({
             {hasActiveFilters && (
               <Link
                 href="/budgets"
-                className="inline-flex items-center justify-center rounded-xl border border-transparent px-2 py-2 text-sm font-medium text-neutral-500 transition hover:text-neutral-900"
+                className="inline-flex h-9 items-center justify-center rounded-md border border-transparent px-2 text-sm font-medium text-text-neutral transition hover:text-text-strong"
               >
                 Limpiar
               </Link>
             )}
 
-            <div className="text-sm text-neutral-500">
+            <div className="text-sm text-text-neutral">
               {resultsCount} {resultsCount === 1 ? "resultado" : "resultados"}
             </div>
           </div>

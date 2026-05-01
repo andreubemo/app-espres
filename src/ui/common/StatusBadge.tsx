@@ -24,18 +24,18 @@ function getStatusLabel(status: string) {
 function getStatusClasses(status: string) {
   switch (status) {
     case "DRAFT":
-      return "border-neutral-200 bg-neutral-50 text-neutral-700";
+      return "border-primary-soft bg-primary-soft/30 text-primary-strong";
     case "SENT":
-      return "border-blue-200 bg-blue-50 text-blue-700";
+      return "border-primary bg-primary text-white";
     case "ACCEPTED":
     case "APPROVED":
       return "border-green-200 bg-green-50 text-green-700";
     case "REJECTED":
       return "border-red-200 bg-red-50 text-red-700";
     case "CANCELLED":
-      return "border-neutral-300 bg-neutral-100 text-neutral-700";
+      return "border-primary-soft bg-surface text-text-neutral";
     default:
-      return "border-neutral-200 bg-neutral-50 text-neutral-700";
+      return "border-border bg-surface text-text-neutral";
   }
 }
 
@@ -46,7 +46,7 @@ export default function StatusBadge({
   return (
     <span
       className={[
-        "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium",
+        "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium",
         getStatusClasses(status),
         className,
       ].join(" ")}

@@ -1,11 +1,7 @@
-import { auth } from "@/lib/auth"
+import { requireInternalUser } from "@/lib/access-control"
 
 export async function getServerSession() {
-  const session = await auth()
+  const user = await requireInternalUser()
 
-  if (!session?.user) {
-    throw new Error("No authenticated user")
-  }
-
-  return session
+  return { user }
 }

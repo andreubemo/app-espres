@@ -11,7 +11,7 @@ export default function BudgetBreadcrumb({
 }: BudgetBreadcrumbProps) {
   return (
     <div className="space-y-2">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-neutral">
         Gestión de presupuestos
       </p>
 
@@ -21,22 +21,22 @@ export default function BudgetBreadcrumb({
       >
         <Link
           href="/budgets"
-          className="text-neutral-500 transition hover:text-neutral-900 hover:underline"
+          className="text-text-neutral transition hover:text-text-strong hover:underline"
         >
           Presupuestos
         </Link>
 
-        <span aria-hidden="true" className="text-neutral-300">
+        <span aria-hidden="true" className="text-primary-soft">
           ›
         </span>
 
-        <span className="font-medium text-neutral-700">{headerCode}</span>
+        <span className="font-medium text-text-neutral">{headerCode}</span>
 
-        <span aria-hidden="true" className="text-neutral-300">
+        <span aria-hidden="true" className="text-primary-soft">
           ›
         </span>
 
-        <span className="font-semibold text-neutral-900">
+        <span className="font-semibold text-text-strong">
           v{viewedVersionNumber}
         </span>
       </nav>

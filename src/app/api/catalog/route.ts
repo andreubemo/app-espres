@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getInternalUserContext } from "@/lib/access-control";
 import { NextResponse } from "next/server";
 
 type CatalogItemResponse = {
@@ -14,8 +15,15 @@ type CatalogItemResponse = {
 
 export async function GET() {
   try {
+    const user = await getInternalUserContext();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const catalogItems = await prisma.catalogItem.findMany({
       where: {
+        companyId: user.companyId,
         isActive: true,
       },
       orderBy: [{ sourceSheet: "asc" }, { sourceRow: "asc" }],

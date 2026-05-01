@@ -1,7 +1,6 @@
 import { redirect, notFound } from "next/navigation";
-import { getServerSession } from "next-auth";
 
-import { authOptions } from "@/lib/auth";
+import { getInternalUserContext } from "@/lib/access-control";
 import { prisma } from "@/lib/prisma";
 import BudgetActionBanner from "./BudgetActionBanner";
 import BudgetBreadcrumb from "./BudgetBreadcrumb";
@@ -96,13 +95,9 @@ export default async function BudgetDetailPage({
   params,
   searchParams,
 }: PageProps) {
-  const session = await getServerSession(authOptions);
+  const user = await getInternalUserContext();
 
-  if (
-    !session?.user?.id ||
-    !session.user.companyId ||
-    session.user.type !== "USER"
-  ) {
+  if (!user) {
     redirect("/login");
   }
 
@@ -131,7 +126,7 @@ export default async function BudgetDetailPage({
   const budget = await prisma.budget.findFirst({
     where: {
       id,
-      companyId: session.user.companyId,
+      companyId: user.companyId,
     },
     include: {
       client: true,
@@ -219,8 +214,8 @@ export default async function BudgetDetailPage({
   );
 
   return (
-    <main className="min-h-screen bg-neutral-50">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4 sm:gap-6 sm:px-6 sm:py-6 lg:px-8">
+    <main className="min-h-screen bg-surface">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-3 sm:gap-4 sm:px-4 sm:py-6 lg:px-8">
         <BudgetBreadcrumb
           headerCode={headerCode}
           viewedVersionNumber={viewedVersionNumber}
@@ -284,8 +279,8 @@ export default async function BudgetDetailPage({
           totalLabel={totalLabel}
         />
 
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="min-w-0 space-y-6">
+        <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="min-w-0 space-y-4">
             <BudgetSectionNav />
 
             <section id="datos" className="scroll-mt-24">
@@ -318,7 +313,7 @@ export default async function BudgetDetailPage({
             </section>
           </div>
 
-          <aside className="space-y-6 xl:sticky xl:top-[72px] xl:self-start">
+          <aside className="space-y-4 xl:sticky xl:top-[72px] xl:self-start">
             <BudgetSummaryCard subtotal={subtotal} total={total} />
 
             <BudgetVersionContextCard
