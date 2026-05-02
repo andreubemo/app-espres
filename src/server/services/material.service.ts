@@ -3,6 +3,12 @@ import { prisma } from "@/lib/prisma"
 export async function getMaterialsByCompany(companyId: string) {
   return prisma.material.findMany({
     where: { companyId },
+    select: {
+      id: true,
+      name: true,
+      unit: true,
+      price: true,
+    },
     orderBy: { createdAt: "desc" },
   })
 }

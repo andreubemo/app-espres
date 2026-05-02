@@ -85,6 +85,7 @@ type PageProps = {
     restoredFrom?: string;
     restoredTo?: string;
     createdVersion?: string;
+    updatedVersion?: string;
     markedSent?: string;
     duplicated?: string;
     viewVersion?: string;
@@ -107,6 +108,7 @@ export default async function BudgetDetailPage({
   const restoredFrom = resolvedSearchParams?.restoredFrom;
   const restoredTo = resolvedSearchParams?.restoredTo;
   const createdVersion = resolvedSearchParams?.createdVersion;
+  const updatedVersion = resolvedSearchParams?.updatedVersion;
   const markedSent = resolvedSearchParams?.markedSent;
   const duplicated = resolvedSearchParams?.duplicated;
   const viewVersion = resolvedSearchParams?.viewVersion;
@@ -119,6 +121,8 @@ export default async function BudgetDetailPage({
 
   const showCreatedVersionBanner =
     !!createdVersion && !Number.isNaN(Number(createdVersion));
+  const showUpdatedVersionBanner =
+    !!updatedVersion && !Number.isNaN(Number(updatedVersion));
 
   const showMarkedSentBanner = markedSent === "1";
   const showDuplicatedBanner = duplicated === "1";
@@ -128,10 +132,30 @@ export default async function BudgetDetailPage({
       id,
       companyId: user.companyId,
     },
-    include: {
-      client: true,
+    select: {
+      id: true,
+      reference: true,
+      project: true,
+      status: true,
+      client: {
+        select: {
+          name: true,
+        },
+      },
+      createdBy: {
+        select: {
+          email: true,
+        },
+      },
       versions: {
         orderBy: { version: "desc" },
+        select: {
+          id: true,
+          version: true,
+          sent: true,
+          createdAt: true,
+          data: true,
+        },
       },
     },
   });
@@ -176,6 +200,7 @@ export default async function BudgetDetailPage({
   const headerCode = data.code || budget.reference || "Sin código";
   const projectName = data.project || "Sin nombre";
   const clientName = budget.client?.name || "Sin cliente";
+  const responsibleName = budget.createdBy?.email || "Sin responsable";
   const currentVersionNumber = latestVersion?.version ?? 1;
   const viewedVersionNumber = effectiveVersion.version;
   const dateLabel = formatDate(data.date);
@@ -239,6 +264,15 @@ export default async function BudgetDetailPage({
           />
         )}
 
+        {showUpdatedVersionBanner && (
+          <BudgetActionBanner
+            tone="success"
+            title="Cambios guardados"
+            message={`El presupuesto se ha actualizado como v${updatedVersion}.`}
+            queryKeysToClear={["updatedVersion"]}
+          />
+        )}
+
         {showMarkedSentBanner && (
           <BudgetActionBanner
             tone="info"
@@ -272,6 +306,7 @@ export default async function BudgetDetailPage({
           headerCode={headerCode}
           projectName={projectName}
           clientName={clientName}
+          responsibleName={responsibleName}
           viewedVersionNumber={viewedVersionNumber}
           isHistoricalView={isHistoricalView}
           dateLabel={dateLabel}
@@ -288,6 +323,7 @@ export default async function BudgetDetailPage({
                 headerCode={headerCode}
                 projectName={projectName}
                 clientName={clientName}
+                responsibleName={responsibleName}
                 statusLabel={budget.status}
               />
             </section>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { Budget } from "@/domain/budgets/budget.model";
@@ -8,14 +9,26 @@ import {
   createEmptyBudget,
   addLine,
   removeLine,
+  updateLineQuantity,
 } from "@/domain/budgets/budget.service";
 
-import { saveBudgetDraft } from "@/app/actions/budgets";
+import {
+  createBudgetClient,
+  getBudgetClientOptions,
+  saveBudgetDraft,
+} from "@/app/actions/budgets";
+import type { BudgetClientOption } from "@/app/actions/budgets";
 
 import BudgetBaseModal from "@/ui/budgets/BudgetBaseModal";
-import BudgetWizardFromCatalog from "@/ui/budgets/BudgetWizardFromCatalog";
 import BudgetLinesPanel from "@/ui/budgets/BudgetLinesPanel";
 import BudgetTotals from "@/ui/budgets/BudgetTotals";
+
+const BudgetWizardFromCatalog = dynamic(
+  () => import("@/ui/budgets/BudgetWizardFromCatalog"),
+  {
+    ssr: false,
+  }
+);
 
 type WizardStep = 1 | 2 | 3;
 
@@ -82,15 +95,68 @@ export default function NewBudgetPage() {
   const router = useRouter();
 
   const [budget, setBudget] = useState<Budget | null>(null);
+  const [clients, setClients] = useState<BudgetClientOption[]>([]);
+  const [clientError, setClientError] = useState<string | null>(null);
   const [wizardOpen, setWizardOpen] = useState(true);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isCreatingClient, startCreateClientTransition] = useTransition();
 
   const currentStep = getCurrentStep(budget, wizardOpen);
 
   const canSave = useMemo(() => {
     return Boolean(budget && budget.lines.length > 0 && !isSaving);
   }, [budget, isSaving]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadClients() {
+      try {
+        const result = await getBudgetClientOptions();
+
+        if (!cancelled) {
+          setClients(result);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setClientError(
+            error instanceof Error
+              ? error.message
+              : "No se pudieron cargar los clientes."
+          );
+        }
+      }
+    }
+
+    loadClients();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function handleCreateClient(data: { name: string; email: string }) {
+    return new Promise<string>((resolve, reject) => {
+      startCreateClientTransition(async () => {
+        try {
+          setClientError(null);
+          const client = await createBudgetClient(data);
+          setClients((current) =>
+            [...current, client].sort((a, b) => a.name.localeCompare(b.name))
+          );
+          resolve(client.id);
+        } catch (error) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "No se pudo crear el cliente.";
+          setClientError(message);
+          reject(error);
+        }
+      });
+    });
+  }
 
   async function handleSaveDraft() {
     if (!budget) return;
@@ -110,7 +176,7 @@ export default function NewBudgetPage() {
         `Borrador guardado correctamente. Referencia: ${result.reference}`
       );
 
-      router.push("/budgets");
+      router.push(`/budgets?createdBudget=${result.budgetId}`);
       router.refresh();
     } catch (error) {
       setSaveMessage(
@@ -126,6 +192,7 @@ export default function NewBudgetPage() {
   return (
     <main className="min-h-screen bg-surface">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-3 sm:px-4 sm:py-6 lg:px-8">
+        {budget ? (
         <section className="rounded-lg border border-border bg-card-background shadow-sm">
           <div className="space-y-4 p-4 sm:p-4">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
@@ -257,6 +324,7 @@ export default function NewBudgetPage() {
             )}
           </div>
         </section>
+        ) : null}
 
         {saveMessage && (
           <div className="rounded-lg border border-border bg-card-background p-4 text-sm text-text-neutral shadow-sm">
@@ -269,11 +337,16 @@ export default function NewBudgetPage() {
             {!budget ? (
               <BudgetBaseModal
                 open={!budget}
+                clients={clients}
+                clientError={clientError}
+                isCreatingClient={isCreatingClient}
+                onCreateClient={handleCreateClient}
                 onSubmit={(data) => {
                   setBudget(
                     createEmptyBudget({
                       code: data.code,
                       project: data.project,
+                      clientId: data.clientId,
                       date: data.date,
                       width: data.width,
                       length: data.length,
@@ -323,11 +396,31 @@ export default function NewBudgetPage() {
 
                 <BudgetWizardFromCatalog
                   open={wizardOpen}
+                  existingLines={budget.lines}
+                  onUpdateExistingLineQuantity={(lineId, quantity) => {
+                    setBudget((current) =>
+                      current
+                        ? updateLineQuantity(current, lineId, quantity)
+                        : current
+                    );
+                    setSaveMessage(null);
+                  }}
                   onClose={() => setWizardOpen(false)}
                   onAdd={(line) => {
-                    setBudget((current) =>
-                      current ? addLine(current, line) : current
-                    );
+                    setBudget((current) => {
+                      if (!current) return current;
+
+                      if (
+                        current.lines.some(
+                          (existingLine) =>
+                            existingLine.catalogItemId === line.catalogItemId
+                        )
+                      ) {
+                        return current;
+                      }
+
+                      return addLine(current, line);
+                    });
                     setSaveMessage(null);
                   }}
                 />

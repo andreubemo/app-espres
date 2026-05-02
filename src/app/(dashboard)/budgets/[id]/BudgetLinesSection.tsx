@@ -115,20 +115,6 @@ export default function BudgetLinesSection({
                       </div>
                     </div>
 
-                    {(line.familyKey || line.catalogItemId || line.itemKey) && (
-                      <div className="rounded-lg bg-surface px-3 py-2 text-xs text-text-neutral">
-                        {line.familyKey ? `familyKey: ${line.familyKey}` : null}
-                        {line.familyKey && (line.catalogItemId || line.itemKey)
-                          ? " · "
-                          : null}
-                        {line.itemKey ? `itemKey: ${line.itemKey}` : null}
-                        {line.itemKey && line.catalogItemId ? " · " : null}
-                        {line.catalogItemId
-                          ? `catalog: ${line.catalogItemId}`
-                          : null}
-                      </div>
-                    )}
-
                     <div className="grid grid-cols-3 gap-3">
                       <div className="rounded-md border border-border bg-surface p-3">
                         <p className="text-xs uppercase tracking-wide text-text-neutral">
@@ -209,24 +195,10 @@ export default function BudgetLinesSection({
                         <div className="font-medium text-text-strong">
                           {family}
                         </div>
-                        {(line.familyKey || line.catalogItemId) && (
-                          <div className="mt-1 text-xs text-text-neutral">
-                            {line.familyKey ? `key: ${line.familyKey}` : null}
-                            {line.familyKey && line.catalogItemId ? " · " : null}
-                            {line.catalogItemId
-                              ? `catalog: ${line.catalogItemId}`
-                              : null}
-                          </div>
-                        )}
                       </td>
 
                       <td className="px-4 py-3">
                         <div className="font-medium text-text-strong">{item}</div>
-                        {line.itemKey && line.itemKey !== item && (
-                          <div className="mt-1 text-xs text-text-neutral">
-                            key: {line.itemKey}
-                          </div>
-                        )}
                       </td>
 
                       <td className="px-4 py-3 text-text-neutral">{unit}</td>

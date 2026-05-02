@@ -10,6 +10,7 @@ import {
 export type CreateEmptyBudgetInput = {
   code: string;
   project: string;
+  clientId: string;
   date: string;
   complexity: BudgetComplexity;
   width: number;
@@ -57,6 +58,7 @@ export function createEmptyBudget(data: CreateEmptyBudgetInput): Budget {
   return {
     code: data.code.trim(),
     project: data.project.trim(),
+    clientId: data.clientId,
     date: data.date,
     complexity: data.complexity,
     dimensions: calculateDimensions(data.width, data.length),
@@ -112,6 +114,74 @@ export function addLine(budget: Budget, input: AddBudgetLineInput): Budget {
 
 export function removeLine(budget: Budget, id: string): Budget {
   const lines = budget.lines.filter((line) => line.id !== id);
+  const { subtotal, total } = calculateTotals(lines, budget.complexity);
+
+  return {
+    ...budget,
+    lines,
+    subtotal,
+    total,
+  };
+}
+
+export function updateBudgetBase(
+  budget: Budget,
+  data: CreateEmptyBudgetInput
+): Budget {
+  const dimensions = calculateDimensions(data.width, data.length);
+  const lines = budget.lines.map((line) => {
+    const recalculatedQty = getQuantityByUnit(
+      line.unit,
+      {
+        surfaceM2: dimensions.surfaceM2,
+        perimeterML: dimensions.perimeterML,
+      },
+      line.quantity
+    );
+    const minimum = getMinimumByFamily(line.family);
+    const quantity = round(
+      minimum ? Math.max(recalculatedQty, minimum) : recalculatedQty
+    );
+
+    return {
+      ...line,
+      quantity,
+      total: round(quantity * line.unitPrice),
+    };
+  });
+  const { subtotal, total } = calculateTotals(lines, data.complexity);
+
+  return {
+    ...budget,
+    code: data.code.trim(),
+    project: data.project.trim(),
+    clientId: data.clientId,
+    date: data.date,
+    complexity: data.complexity,
+    dimensions,
+    lines,
+    subtotal,
+    total,
+  };
+}
+
+export function updateLineQuantity(
+  budget: Budget,
+  id: string,
+  quantity: number
+): Budget {
+  const safeQuantity = Number.isFinite(quantity) ? Math.max(0, quantity) : 0;
+  const lines = budget.lines.map((line) => {
+    if (line.id !== id) return line;
+
+    const nextQuantity = round(safeQuantity);
+
+    return {
+      ...line,
+      quantity: nextQuantity,
+      total: round(nextQuantity * line.unitPrice),
+    };
+  });
   const { subtotal, total } = calculateTotals(lines, budget.complexity);
 
   return {

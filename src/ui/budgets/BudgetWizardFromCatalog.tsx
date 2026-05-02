@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Check, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import Modal from "../common/Modal";
 
 type WizardItem = {
@@ -19,8 +20,17 @@ type CatalogApiResponse = {
   itemsByFamily: Record<string, WizardItem[]>;
 };
 
+type ExistingWizardLine = {
+  id: string;
+  catalogItemId: string;
+  familyKey?: string;
+  family?: string;
+  quantity: number;
+};
+
 type BudgetWizardFromCatalogProps = {
   open: boolean;
+  existingLines?: ExistingWizardLine[];
   onAdd: (line: {
     catalogItemId: string;
     familyKey?: string;
@@ -32,6 +42,7 @@ type BudgetWizardFromCatalogProps = {
     quantity: number;
     unitPrice: number;
   }) => void;
+  onUpdateExistingLineQuantity?: (lineId: string, quantity: number) => void;
   onClose: () => void;
 };
 
@@ -50,9 +61,24 @@ function formatFamilyLabel(value?: string) {
   return value.replace(/_/g, " ").replace(/\s+/g, " ").trim();
 }
 
+function normalizeForMatch(value?: string) {
+  return formatFamilyLabel(value).toLowerCase();
+}
+
+function lineBelongsToFamily(line: ExistingWizardLine, family: string) {
+  const normalizedFamily = normalizeForMatch(family);
+
+  return (
+    normalizeForMatch(line.family) === normalizedFamily ||
+    normalizeForMatch(line.familyKey) === normalizedFamily
+  );
+}
+
 export default function BudgetWizardFromCatalog({
   open,
+  existingLines = [],
   onAdd,
+  onUpdateExistingLineQuantity,
   onClose,
 }: BudgetWizardFromCatalogProps) {
   const [families, setFamilies] = useState<string[]>([]);
@@ -70,6 +96,10 @@ export default function BudgetWizardFromCatalog({
   const [completedFamilies, setCompletedFamilies] = useState<
     Record<string, boolean>
   >({});
+  const [lastSelectedItemId, setLastSelectedItemId] = useState<string | null>(
+    null
+  );
+  const quantityInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -133,18 +163,53 @@ export default function BudgetWizardFromCatalog({
     [selectedItems]
   );
 
+  const existingLineByCatalogId = useMemo(() => {
+    const map = new Map<string, ExistingWizardLine>();
+
+    existingLines.forEach((line) => {
+      if (line.catalogItemId) {
+        map.set(line.catalogItemId, line);
+      }
+    });
+
+    return map;
+  }, [existingLines]);
+
+  const selectedPanelItems = useMemo(() => {
+    const includedItems = items.filter((item) =>
+      existingLineByCatalogId.has(item.id)
+    );
+    const pendingItems = selectedList.filter(
+      (item) => !existingLineByCatalogId.has(item.id)
+    );
+
+    return [...includedItems, ...pendingItems];
+  }, [existingLineByCatalogId, items, selectedList]);
+
   const subtotal = useMemo(() => {
-    return selectedList.reduce((acc, item) => {
-      const qty = quantities[item.id] ?? 1;
+    return selectedPanelItems.reduce((acc, item) => {
+      const existingLine = existingLineByCatalogId.get(item.id);
+      const qty = existingLine?.quantity ?? quantities[item.id] ?? 1;
       return acc + item.unitPrice * qty;
     }, 0);
-  }, [selectedList, quantities]);
+  }, [existingLineByCatalogId, quantities, selectedPanelItems]);
+
+  useEffect(() => {
+    if (!lastSelectedItemId || !selectedItems[lastSelectedItemId]) return;
+
+    const input = quantityInputRefs.current[lastSelectedItemId];
+    if (!input) return;
+
+    input.focus();
+    input.select();
+  }, [lastSelectedItemId, selectedItems]);
 
   function resetWizardState() {
     setStep(0);
     setSelectedItems({});
     setQuantities({});
     setCompletedFamilies({});
+    setLastSelectedItemId(null);
   }
 
   function handleClose() {
@@ -156,6 +221,7 @@ export default function BudgetWizardFromCatalog({
     setStep(index);
     setSelectedItems({});
     setQuantities({});
+    setLastSelectedItemId(null);
   }
 
   function goNextFamily() {
@@ -181,6 +247,8 @@ export default function BudgetWizardFromCatalog({
   }
 
   function toggleItem(item: WizardItem) {
+    if (existingLineByCatalogId.has(item.id)) return;
+
     const isSelected = Boolean(selectedItems[item.id]);
 
     setSelectedItems((prev) => {
@@ -207,6 +275,8 @@ export default function BudgetWizardFromCatalog({
         [item.id]: prev[item.id] ?? 1,
       };
     });
+
+    setLastSelectedItemId(isSelected ? null : item.id);
   }
 
   function handleChangeQuantity(itemId: string, value: string) {
@@ -218,8 +288,18 @@ export default function BudgetWizardFromCatalog({
     }));
   }
 
-  function confirm() {
+  function handleExistingQuantityChange(lineId: string, value: string) {
+    const parsed = Number(value);
+    onUpdateExistingLineQuantity?.(
+      lineId,
+      Number.isFinite(parsed) && parsed > 0 ? parsed : 1
+    );
+  }
+
+  function addSelectedItemsToBudget() {
     selectedList.forEach((item) => {
+      if (existingLineByCatalogId.has(item.id)) return;
+
       onAdd({
         catalogItemId: item.id,
         familyKey: item.familyKey,
@@ -232,8 +312,16 @@ export default function BudgetWizardFromCatalog({
         unitPrice: item.unitPrice,
       });
     });
+  }
 
+  function confirm() {
+    addSelectedItemsToBudget();
     goNextFamily();
+  }
+
+  function confirmAndClose() {
+    addSelectedItemsToBudget();
+    handleClose();
   }
 
   if (!open) return null;
@@ -246,41 +334,23 @@ export default function BudgetWizardFromCatalog({
       size="wide"
     >
       <div className="flex h-full min-h-0 flex-col overflow-hidden bg-app-background">
-        <div className="shrink-0 border-b border-border bg-card-background px-4 py-3">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="min-w-0">
-              <div className="text-xs font-semibold uppercase text-primary">
-                Selección guiada
-              </div>
+        <div className="shrink-0 border-b border-border bg-card-background px-3 py-2.5 sm:px-4 sm:py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
               <div className="truncate text-base font-semibold text-text-strong">
                 {currentFamily
                   ? formatFamilyLabel(currentFamily)
                   : "Sin familias"}
-              </div>
-              <div className="text-xs text-text-neutral">
-                {totalFamilies > 0
-                  ? `Familia ${step + 1} de ${totalFamilies}`
-                  : "No hay familias disponibles"}
+                {totalFamilies > 0 ? ` — ${step + 1}/${totalFamilies}` : ""}
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:min-w-[260px]">
-              <div className="rounded-lg border border-border bg-surface px-3 py-2">
-                <div className="text-xs text-text-neutral">Seleccionadas</div>
-                <div className="text-sm font-semibold text-text-strong">
-                  {selectedList.length}
-                </div>
-              </div>
-              <div className="rounded-lg border border-border bg-surface px-3 py-2">
-                <div className="text-xs text-text-neutral">Subtotal</div>
-                <div className="text-sm font-semibold text-text-strong">
-                  {formatCurrency(subtotal)}
-                </div>
-              </div>
+            <div className="shrink-0 text-right text-base font-semibold text-text-strong">
+              {formatCurrency(subtotal)}
             </div>
           </div>
 
-          <div className="mt-3">
+          <div className="mt-2">
             <div className="mb-1 flex items-center justify-between text-xs text-text-neutral">
               <span>Progreso</span>
               <span>{Math.round(progress)}%</span>
@@ -314,16 +384,15 @@ export default function BudgetWizardFromCatalog({
 
         {!loadingCatalog && !catalogError && totalFamilies > 0 && (
           <>
-            <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(180px,1fr)_minmax(180px,0.85fr)] gap-3 overflow-hidden p-3 lg:grid-cols-[220px_minmax(0,1fr)_320px] lg:grid-rows-1">
+            <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] gap-2 overflow-hidden p-2 lg:grid-cols-[220px_minmax(0,1fr)_320px] lg:grid-rows-1 lg:gap-3 lg:p-3">
               <aside className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-card-background">
-                <div className="shrink-0 border-b border-border px-3 py-2 text-xs font-semibold uppercase text-text-neutral">
-                  Familias
-                </div>
-
-                <div className="flex gap-1.5 overflow-auto p-2 lg:flex-col">
+                <div className="flex gap-1.5 overflow-auto p-1.5 lg:flex-col lg:p-2">
                   {families.map((family, index) => {
                     const isActive = index === step;
-                    const isDone = completedFamilies[family];
+                    const hasExistingLines = existingLines.some((line) =>
+                      lineBelongsToFamily(line, family)
+                    );
+                    const isDone = completedFamilies[family] || hasExistingLines;
 
                     return (
                       <button
@@ -331,12 +400,12 @@ export default function BudgetWizardFromCatalog({
                         type="button"
                         onClick={() => goToStep(index)}
                         className={[
-                          "flex shrink-0 items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-sm font-medium transition lg:w-full",
+                          "flex shrink-0 items-center justify-between gap-2 rounded-md border px-2.5 py-1.5 text-left text-xs font-medium transition sm:text-sm lg:w-full",
                           isActive
-                            ? "bg-primary text-white"
+                            ? "border-primary bg-primary text-white shadow-sm"
                             : isDone
-                            ? "bg-primary-soft/35 text-text-strong"
-                            : "bg-card-background text-text-neutral hover:bg-surface hover:text-text-strong",
+                            ? "border-primary-soft bg-primary-soft/40 text-text-strong"
+                            : "border-transparent bg-surface text-text-neutral hover:border-border hover:text-text-strong",
                         ].join(" ")}
                       >
                         <span className="truncate">
@@ -354,7 +423,7 @@ export default function BudgetWizardFromCatalog({
               </aside>
 
               <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-card-background">
-                <div className="flex shrink-0 items-center justify-between border-b border-border px-3 py-2">
+                <div className="flex shrink-0 items-center justify-between border-b border-border px-2.5 py-1.5 sm:px-3 sm:py-2">
                   <h3 className="text-sm font-semibold text-text-strong">
                     Partidas
                   </h3>
@@ -363,35 +432,52 @@ export default function BudgetWizardFromCatalog({
                   </span>
                 </div>
 
-                <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-2.5">
+                <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto p-1.5 sm:space-y-2 sm:p-2.5">
                   {items.length === 0 ? (
                     <div className="rounded-lg border border-dashed border-border bg-surface p-4 text-sm text-text-neutral">
                       No hay partidas en esta familia.
                     </div>
                   ) : (
                     items.map((item) => {
-                      const selected = Boolean(selectedItems[item.id]);
+                      const existingLine = existingLineByCatalogId.get(item.id);
+                      const isAlreadyIncluded = Boolean(existingLine);
+                      const isPendingSelected = Boolean(selectedItems[item.id]);
+                      const selected = isPendingSelected || isAlreadyIncluded;
+                      const quantityValue = isAlreadyIncluded
+                        ? existingLine?.quantity ?? 1
+                        : quantities[item.id] ?? 1;
 
                       return (
-                        <button
+                        <article
                           key={item.id}
-                          type="button"
-                          onClick={() => toggleItem(item)}
                           className={[
-                            "group relative w-full rounded-lg border p-3 text-left transition",
+                            "group relative w-full rounded-md border p-2 text-left transition sm:rounded-lg sm:p-2.5",
                             selected
                               ? "border-primary bg-primary-soft/20 shadow-sm"
                               : "border-border bg-card-background hover:border-primary-soft hover:bg-surface",
                           ].join(" ")}
                         >
-                          <div className="flex items-start justify-between gap-3">
+                          <button
+                            type="button"
+                            onClick={() => toggleItem(item)}
+                            className={[
+                              "w-full text-left",
+                              isAlreadyIncluded ? "cursor-default" : "",
+                            ].join(" ")}
+                            aria-label={
+                              isAlreadyIncluded
+                                ? `${item.item} ya incluida`
+                                : item.item
+                            }
+                          >
+                          <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
-                              <div className="font-medium text-text-strong">
+                              <div className="line-clamp-2 text-sm font-medium leading-4 text-text-strong sm:leading-5">
                                 {item.item}
                               </div>
 
                               {item.material ? (
-                                <div className="mt-0.5 text-xs leading-5 text-text-neutral">
+                                <div className="mt-0.5 hidden text-xs leading-4 text-text-neutral sm:block">
                                   {item.material}
                                 </div>
                               ) : null}
@@ -399,7 +485,7 @@ export default function BudgetWizardFromCatalog({
 
                             <span
                               className={[
-                                "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-xs transition",
+                                "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[10px] transition sm:h-5 sm:w-5 sm:text-xs",
                                 selected
                                   ? "border-primary bg-primary text-white"
                                   : "border-border bg-card-background text-transparent group-hover:border-primary-soft",
@@ -409,24 +495,86 @@ export default function BudgetWizardFromCatalog({
                             </span>
                           </div>
 
-                          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-text-neutral">
+                          <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-xs text-text-neutral">
                             <span>
                               {formatCurrency(item.unitPrice)} / {item.unit}
                             </span>
                             {selected ? (
-                              <span className="rounded-full bg-primary px-2 py-0.5 font-semibold text-white">
-                                Seleccionada
+                              <span className="font-semibold text-primary">
+                                {isAlreadyIncluded
+                                  ? "Ya incluida"
+                                  : "Seleccionada"}
                               </span>
                             ) : null}
                           </div>
-                        </button>
+                          </button>
+
+                          {selected ? (
+                            <div className="mt-1.5 grid grid-cols-[minmax(0,1fr)_72px_32px] items-center gap-2 lg:hidden">
+                              <div className="truncate text-xs font-medium text-text-strong">
+                                {item.item}
+                              </div>
+
+                              <label className="text-xs">
+                                <span className="sr-only">Cantidad</span>
+                                <input
+                                  ref={(node) => {
+                                    quantityInputRefs.current[item.id] = node;
+                                  }}
+                                  type="number"
+                                  min={1}
+                                  step="0.01"
+                                  className="h-8 w-full rounded-md border border-border bg-card-background px-2 text-center text-sm text-text-strong outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/20"
+                                  value={quantityValue}
+                                  onFocus={(e) => e.target.select()}
+                                  onChange={(e) => {
+                                    if (existingLine) {
+                                      handleExistingQuantityChange(
+                                        existingLine.id,
+                                        e.target.value
+                                      );
+                                      return;
+                                    }
+
+                                    handleChangeQuantity(item.id, e.target.value);
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      e.preventDefault();
+                                      confirm();
+                                    }
+                                  }}
+                                />
+                              </label>
+
+                              {isAlreadyIncluded ? (
+                                <span
+                                  className="flex h-8 w-8 items-center justify-center rounded-md text-xs font-semibold text-primary"
+                                  title="Ya incluida"
+                                >
+                                  ✓
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleItem(item)}
+                                  className="flex h-8 w-8 items-center justify-center rounded-md text-base font-semibold text-text-neutral transition hover:bg-surface hover:text-primary"
+                                  aria-label={`Quitar ${item.item}`}
+                                  title="Quitar"
+                                >
+                                  ×
+                                </button>
+                              )}
+                            </div>
+                          ) : null}
+                        </article>
                       );
                     })
                   )}
                 </div>
               </section>
 
-              <section className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-card-background">
+              <section className="hidden min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-card-background lg:flex">
                 <div className="flex shrink-0 items-center justify-between border-b border-border px-3 py-2">
                   <h3 className="text-sm font-semibold text-text-strong">
                     Seleccionadas
@@ -437,13 +585,17 @@ export default function BudgetWizardFromCatalog({
                 </div>
 
                 <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-2.5">
-                  {selectedList.length === 0 ? (
+                  {selectedPanelItems.length === 0 ? (
                     <div className="rounded-lg border border-dashed border-border bg-surface p-4 text-sm text-text-neutral">
                       Selecciona una o varias partidas de esta familia.
                     </div>
                   ) : (
-                    selectedList.map((item) => {
-                      const qty = quantities[item.id] ?? 1;
+                    selectedPanelItems.map((item) => {
+                      const existingLine = existingLineByCatalogId.get(item.id);
+                      const isAlreadyIncluded = Boolean(existingLine);
+                      const qty = isAlreadyIncluded
+                        ? existingLine?.quantity ?? 1
+                        : quantities[item.id] ?? 1;
                       const lineTotal = qty * item.unitPrice;
 
                       return (
@@ -463,13 +615,19 @@ export default function BudgetWizardFromCatalog({
                               ) : null}
                             </div>
 
-                            <button
-                              type="button"
-                              onClick={() => toggleItem(item)}
-                              className="shrink-0 text-xs font-medium text-text-neutral hover:text-primary"
-                            >
-                              Quitar
-                            </button>
+                            {isAlreadyIncluded ? (
+                              <span className="shrink-0 text-xs font-semibold text-primary">
+                                Ya incluida
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => toggleItem(item)}
+                                className="shrink-0 text-xs font-medium text-text-neutral hover:text-primary"
+                              >
+                                Quitar
+                              </button>
+                            )}
                           </div>
 
                           <label className="text-xs">
@@ -483,9 +641,17 @@ export default function BudgetWizardFromCatalog({
                               className="h-9 w-full rounded-md border border-border bg-card-background px-2 text-sm text-text-strong outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/20"
                               value={qty}
                               onFocus={(e) => e.target.select()}
-                              onChange={(e) =>
-                                handleChangeQuantity(item.id, e.target.value)
-                              }
+                              onChange={(e) => {
+                                if (existingLine) {
+                                  handleExistingQuantityChange(
+                                    existingLine.id,
+                                    e.target.value
+                                  );
+                                  return;
+                                }
+
+                                handleChangeQuantity(item.id, e.target.value);
+                              }}
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
                                   e.preventDefault();
@@ -511,34 +677,90 @@ export default function BudgetWizardFromCatalog({
               </section>
             </div>
 
-            <div className="flex shrink-0 flex-col gap-2 border-t border-border bg-card-background px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="sticky bottom-0 z-10 grid shrink-0 grid-cols-4 items-center border-t border-border bg-card-background px-2 py-1.5 sm:flex sm:items-center sm:justify-between sm:px-4 sm:py-3">
               <button
                 type="button"
                 onClick={goPrevFamily}
                 disabled={step === 0}
-                className="rounded-md border border-border bg-card-background px-4 py-2 text-sm font-medium text-text-neutral transition hover:bg-surface hover:text-text-strong disabled:opacity-40"
+                className="mx-auto flex h-10 w-12 items-center justify-center rounded-full text-text-strong transition hover:bg-surface disabled:opacity-35 sm:mx-0 sm:h-11 sm:w-auto sm:min-w-28 sm:rounded-md sm:border sm:border-border sm:bg-card-background sm:px-3 sm:text-sm"
+                aria-label="Anterior"
+                title="Anterior"
               >
-                ← Anterior
+                <ChevronLeft
+                  aria-hidden="true"
+                  className="h-6 w-6 sm:hidden"
+                  strokeWidth={2.25}
+                />
+                <span className="hidden sm:inline">Anterior</span>
               </button>
 
-              <div className="flex flex-col gap-2 sm:flex-row">
+              <div className="contents sm:flex sm:gap-2">
                 <button
                   type="button"
                   onClick={goNextFamily}
-                  className="rounded-md border border-border bg-card-background px-4 py-2 text-sm font-medium text-text-neutral transition hover:bg-surface hover:text-text-strong"
+                  className="mx-auto flex h-10 w-12 items-center justify-center rounded-full text-text-strong transition hover:bg-surface sm:mx-0 sm:h-11 sm:w-auto sm:min-w-28 sm:rounded-md sm:border sm:border-border sm:bg-card-background sm:px-3 sm:text-sm"
+                  aria-label={
+                    step < families.length - 1
+                      ? "Siguiente familia"
+                      : "Cerrar selector"
+                  }
+                  title={
+                    step < families.length - 1
+                      ? "Siguiente familia"
+                      : "Cerrar selector"
+                  }
                 >
-                  {step < families.length - 1 ? "Saltar" : "Finalizar"}
+                  <ChevronRight
+                    aria-hidden="true"
+                    className="h-6 w-6 sm:hidden"
+                    strokeWidth={2.25}
+                  />
+                  <span className="hidden sm:inline">
+                    {step < families.length - 1 ? "Siguiente" : "Cerrar"}
+                  </span>
                 </button>
 
                 <button
                   type="button"
                   onClick={confirm}
                   disabled={selectedList.length === 0}
-                  className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-strong disabled:opacity-45"
+                  className="mx-auto flex h-10 w-12 items-center justify-center rounded-full text-text-strong transition hover:bg-surface disabled:opacity-45 sm:mx-0 sm:h-11 sm:w-auto sm:min-w-36 sm:rounded-md sm:bg-primary sm:px-3 sm:text-sm sm:text-white sm:hover:bg-primary-strong"
+                  aria-label={
+                    step < families.length - 1
+                      ? "Añadir y seguir"
+                      : "Añadir y cerrar"
+                  }
+                  title={
+                    step < families.length - 1
+                      ? "Añadir y seguir"
+                      : "Añadir y cerrar"
+                  }
                 >
-                  {step < families.length - 1
-                    ? "Añadir y seguir →"
-                    : "Añadir y cerrar"}
+                  <Plus
+                    aria-hidden="true"
+                    className="h-6 w-6 sm:hidden"
+                    strokeWidth={2.5}
+                  />
+                  <span className="hidden sm:inline">
+                    {step < families.length - 1
+                      ? "Añadir y seguir"
+                      : "Añadir"}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={confirmAndClose}
+                  className="mx-auto flex h-10 w-12 items-center justify-center rounded-full border border-primary bg-primary text-white transition hover:bg-primary-strong sm:mx-0 sm:h-11 sm:w-auto sm:min-w-36 sm:rounded-md sm:px-3 sm:text-sm"
+                  aria-label="Aceptar partidas y cerrar"
+                  title="Aceptar partidas y cerrar"
+                >
+                  <Check
+                    aria-hidden="true"
+                    className="h-6 w-6 sm:hidden"
+                    strokeWidth={2.5}
+                  />
+                  <span className="hidden sm:inline">Aceptar y cerrar</span>
                 </button>
               </div>
             </div>

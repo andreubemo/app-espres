@@ -1,10 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import {
-  createBudgetVersionFromLatest,
   duplicateBudgetDraft,
   markBudgetAsSent,
 } from "@/app/actions/budgets";
@@ -26,7 +26,7 @@ export default function BudgetDetailActions({
   const [isPending, startTransition] = useTransition();
 
   const canMarkAsSent = status === "DRAFT" && !isHistoricalView;
-  const canCreateNewVersion = status !== "REJECTED" && !isHistoricalView;
+  const canEdit = status !== "REJECTED" && !isHistoricalView;
   const canDuplicate = !isHistoricalView;
 
   function handleMarkAsSent() {
@@ -41,14 +41,6 @@ export default function BudgetDetailActions({
     startTransition(async () => {
       const result = await duplicateBudgetDraft(budgetId);
       router.push(`/budgets/${result.budgetId}?duplicated=1`);
-      router.refresh();
-    });
-  }
-
-  function handleCreateNewVersion() {
-    startTransition(async () => {
-      const result = await createBudgetVersionFromLatest(budgetId);
-      router.push(`/budgets/${budgetId}?createdVersion=${result.version}`);
       router.refresh();
     });
   }
@@ -78,14 +70,18 @@ export default function BudgetDetailActions({
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <button
-          type="button"
-          onClick={handleCreateNewVersion}
-          disabled={isPending || !canCreateNewVersion}
-          className="rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:bg-primary-soft"
+        <Link
+          href={canEdit ? `/budgets/${budgetId}/edit` : "#"}
+          aria-disabled={!canEdit}
+          className={[
+            "rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-white transition hover:bg-primary-strong",
+            !canEdit
+              ? "pointer-events-none cursor-not-allowed bg-primary-soft"
+              : "",
+          ].join(" ")}
         >
-          {isPending ? "Procesando..." : "Nueva versión"}
-        </button>
+          Editar presupuesto
+        </Link>
 
         <button
           type="button"
@@ -108,8 +104,8 @@ export default function BudgetDetailActions({
 
       <div className="grid gap-3 text-xs text-text-neutral md:grid-cols-3">
         <p>
-          Crea una nueva versión del presupuesto actual para seguir trabajando
-          sin perder trazabilidad.
+          Edita datos o partidas. Si guardas cambios reales, se crea la
+          siguiente versión automáticamente.
         </p>
         <p>
           Cambia el estado a enviado y marca la versión actual como enviada.

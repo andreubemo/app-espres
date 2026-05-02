@@ -37,6 +37,7 @@ export interface BudgetDimensions {
 export interface Budget {
   code: string;
   project: string;
+  clientId: string;
   date: string;
   complexity: BudgetComplexity;
   dimensions: BudgetDimensions;

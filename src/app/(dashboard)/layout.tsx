@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { CSSProperties, ReactNode } from "react";
 import { redirect } from "next/navigation";
 
 import {
@@ -24,7 +24,10 @@ export default async function DashboardLayout({
   const userName = userEmail.split("@")[0] || "Usuario";
 
   return (
-    <div className="min-h-screen bg-surface">
+    <div
+      className="min-h-screen bg-surface"
+      style={{ "--app-header-height": "61px" } as CSSProperties}
+    >
       <AppHeader
         canManageUsers={canManageUsers(user.role)}
         userName={userName}

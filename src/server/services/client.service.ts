@@ -3,6 +3,11 @@ import { prisma } from "@/lib/prisma"
 export async function getClientsByCompany(companyId: string) {
   return prisma.client.findMany({
     where: { companyId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
     orderBy: { createdAt: "desc" },
   })
 }

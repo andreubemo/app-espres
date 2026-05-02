@@ -26,6 +26,19 @@ export async function GET() {
         companyId: user.companyId,
         isActive: true,
       },
+      select: {
+        id: true,
+        sourceSheet: true,
+        sourceRow: true,
+        familyKey: true,
+        itemKey: true,
+        family: true,
+        material: true,
+        itemName: true,
+        measureUnit: true,
+        quantityLabel: true,
+        unitPriceBase: true,
+      },
       orderBy: [{ sourceSheet: "asc" }, { sourceRow: "asc" }],
     });
 

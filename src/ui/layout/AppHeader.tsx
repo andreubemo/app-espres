@@ -71,7 +71,7 @@ export default function AppHeader({
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-card-background/95 shadow-sm backdrop-blur">
-      <div className="mx-auto flex h-14 w-full max-w-7xl items-center gap-3 px-4 sm:px-5 lg:px-8">
+      <div className="mx-auto flex h-[61px] w-full max-w-7xl items-center gap-3 px-4 sm:px-5 lg:px-8">
         <Link
           href="/budgets"
           className="inline-flex min-w-0 shrink-0 items-center gap-2.5"

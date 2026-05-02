@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { getInternalUserContext } from "@/lib/access-control";
 import { prisma } from "@/lib/prisma";
 
-import PageHeader from "@/ui/common/PageHeader";
 import SectionCard from "@/ui/common/SectionCard";
 import StatusBadge from "@/ui/common/StatusBadge";
 import BudgetListActions from "@/ui/budgets/BudgetListActions";
@@ -53,6 +52,7 @@ type PageProps = {
   searchParams?: Promise<{
     q?: string;
     status?: string;
+    createdBudget?: string;
   }>;
 };
 
@@ -160,16 +160,33 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const q = resolvedSearchParams?.q?.trim() || "";
   const status = resolvedSearchParams?.status?.trim() || "";
+  const createdBudgetId = resolvedSearchParams?.createdBudget?.trim() || "";
 
   const budgets = await prisma.budget.findMany({
     where: {
       companyId: user.companyId,
     },
-    include: {
-      client: true,
+    select: {
+      id: true,
+      reference: true,
+      status: true,
+      client: {
+        select: {
+          name: true,
+        },
+      },
+      createdBy: {
+        select: {
+          email: true,
+        },
+      },
       versions: {
         orderBy: { version: "desc" },
         take: 1,
+        select: {
+          version: true,
+          data: true,
+        },
       },
     },
     orderBy: {
@@ -183,10 +200,7 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
 
     const codeLabel = data.code?.trim() || budget.reference || "";
     const projectLabel = data.project?.trim() || "";
-    const clientLabel =
-      budget.client.email === "pendiente@espres.local"
-        ? "Cliente pendiente"
-        : budget.client.name;
+    const clientLabel = budget.client.name;
 
     const matchesStatus = !status || budget.status === status;
 
@@ -202,12 +216,43 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
 
   return (
     <main className="min-h-screen bg-surface">
+      {createdBudgetId ? (
+        <style>{`
+          @keyframes budget-created-flash {
+            0% {
+              border-color: #dedbd6;
+              box-shadow: 0 1px 2px rgba(31, 31, 31, 0.05), 0 10px 24px rgba(31, 31, 31, 0.04);
+              background: #fbfaf7;
+            }
+            18% {
+              border-color: #a9683d;
+              box-shadow: 0 0 0 4px rgba(169, 104, 61, 0.18), 0 14px 30px rgba(169, 104, 61, 0.12);
+              background: #fff7f0;
+            }
+            100% {
+              border-color: #dedbd6;
+              box-shadow: 0 1px 2px rgba(31, 31, 31, 0.05), 0 10px 24px rgba(31, 31, 31, 0.04);
+              background: #fbfaf7;
+            }
+          }
+
+          .budget-created-flash {
+            animation: budget-created-flash 1.8s ease-out 1;
+          }
+        `}</style>
+      ) : null}
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-6 lg:px-8">
-        <PageHeader
-          eyebrow={"Gesti\u00f3n de presupuestos"}
-          title="Presupuestos"
-          description="Borradores y presupuestos guardados de tu empresa."
-        />
+        <header className="space-y-1">
+          <p className="text-xs font-semibold uppercase text-primary">
+            Gestión de presupuestos
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight text-text-strong">
+            Presupuestos
+          </h1>
+          <p className="max-w-2xl text-sm leading-5 text-text-neutral">
+            Borradores y presupuestos guardados de tu empresa.
+          </p>
+        </header>
 
         <SectionCard contentClassName="p-0">
           <BudgetsFiltersBar
@@ -246,18 +291,20 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
 
               const lineCount = lines.length;
 
-              const clientLabel =
-                budget.client.email === "pendiente@espres.local"
-                  ? "Cliente pendiente"
-                  : budget.client.name;
+              const clientLabel = budget.client.name;
+              const ownerLabel = budget.createdBy.email;
 
               const projectLabel = data.project?.trim() || "Sin nombre";
               const codeLabel = data.code?.trim() || budget.reference;
+              const isCreatedBudget = budget.id === createdBudgetId;
 
               return (
                 <Card
                   key={budget.id}
-                  className="group transition hover:border-[#c9c2b8] hover:shadow-[0_2px_4px_rgba(31,31,31,0.06),0_14px_30px_rgba(31,31,31,0.06)]"
+                  className={[
+                    "group transition hover:border-[#c9c2b8] hover:shadow-[0_2px_4px_rgba(31,31,31,0.06),0_14px_30px_rgba(31,31,31,0.06)]",
+                    isCreatedBudget ? "budget-created-flash" : "",
+                  ].join(" ")}
                   padding="none"
                   variant="elevated"
                 >
@@ -288,6 +335,13 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
                             Cliente:{" "}
                             <strong className="font-semibold text-text-strong">
                               {clientLabel}
+                            </strong>
+                          </p>
+
+                          <p className="min-w-0">
+                            Responsable:{" "}
+                            <strong className="font-semibold text-text-strong">
+                              {ownerLabel}
                             </strong>
                           </p>
 

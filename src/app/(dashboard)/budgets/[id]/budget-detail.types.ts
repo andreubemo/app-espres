@@ -3,6 +3,7 @@ export type StoredBudgetLine = {
   catalogItemId?: string;
   family?: string;
   item?: string;
+  material?: string | null;
   familyKey?: string;
   itemKey?: string;
   unit?: string;
@@ -22,6 +23,7 @@ export type StoredBudgetLine = {
 export type StoredBudgetData = {
   code?: string;
   project?: string;
+  clientId?: string;
   date?: string;
   complexity?: string;
   dimensions?: {
