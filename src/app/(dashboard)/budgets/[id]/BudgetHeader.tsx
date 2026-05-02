@@ -8,6 +8,7 @@ type BudgetHeaderProps = {
   headerCode: string;
   projectName: string;
   clientName: string;
+  responsibleName: string;
   viewedVersionNumber: number;
   isHistoricalView: boolean;
   dateLabel: string;
@@ -21,6 +22,7 @@ export default function BudgetHeader({
   headerCode,
   projectName,
   clientName,
+  responsibleName,
   viewedVersionNumber,
   isHistoricalView,
   dateLabel,
@@ -51,6 +53,10 @@ export default function BudgetHeader({
 
               <span className="inline-flex items-center rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-text-neutral">
                 Cliente: {clientName}
+              </span>
+
+              <span className="inline-flex items-center rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-text-neutral">
+                Responsable: {responsibleName}
               </span>
 
               <span className="inline-flex items-center rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-text-neutral">

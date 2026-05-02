@@ -53,9 +53,9 @@ export default function UserMenu({
         onClick={() => setOpen((value) => !value)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="inline-flex h-9 items-center gap-2 rounded-md border border-border bg-card-background px-2 shadow-sm transition hover:border-primary-soft hover:bg-surface"
+        className="inline-flex h-11 items-center gap-2 rounded-md border border-border bg-card-background px-2.5 shadow-sm transition hover:border-primary-soft hover:bg-surface"
       >
-        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-text-strong text-xs font-semibold text-white">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-text-strong text-xs font-semibold text-white">
           {initial}
         </div>
 

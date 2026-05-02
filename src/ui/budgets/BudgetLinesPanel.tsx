@@ -5,6 +5,7 @@ import { BudgetLine } from "@/domain/budgets/budget.model";
 type BudgetLinesPanelProps = {
   lines: BudgetLine[];
   onRemove: (id: string) => void;
+  onQuantityChange?: (id: string, quantity: number) => void;
 };
 
 function formatCurrency(value?: number) {
@@ -32,7 +33,10 @@ function formatFamilyLabel(value?: string) {
 export default function BudgetLinesPanel({
   lines,
   onRemove,
+  onQuantityChange,
 }: BudgetLinesPanelProps) {
+  const canEditQuantity = Boolean(onQuantityChange);
+
   return (
     <div className="space-y-3">
       {lines.map((line, index) => (
@@ -88,9 +92,29 @@ export default function BudgetLinesPanel({
           <div className="mt-3 grid gap-2 sm:grid-cols-3">
             <div className="rounded-lg border border-border bg-surface p-2.5">
               <p className="text-xs uppercase text-text-neutral">Cantidad</p>
-              <p className="mt-0.5 text-sm font-semibold text-text-strong">
-                {formatNumber(line.quantity)} {line.unit}
-              </p>
+              {canEditQuantity ? (
+                <div className="mt-1 flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={line.quantity}
+                    onChange={(event) =>
+                      onQuantityChange?.(line.id, Number(event.target.value))
+                    }
+                    onFocus={(event) => event.target.select()}
+                    className="h-9 w-full rounded-md border border-border bg-card-background px-2 text-sm font-semibold text-text-strong outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/20"
+                    aria-label={`Cantidad de ${line.item}`}
+                  />
+                  <span className="shrink-0 text-sm font-semibold text-text-strong">
+                    {line.unit}
+                  </span>
+                </div>
+              ) : (
+                <p className="mt-0.5 text-sm font-semibold text-text-strong">
+                  {formatNumber(line.quantity)} {line.unit}
+                </p>
+              )}
             </div>
 
             <div className="rounded-lg border border-border bg-surface p-2.5">

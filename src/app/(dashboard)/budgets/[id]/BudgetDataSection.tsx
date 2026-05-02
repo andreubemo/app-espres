@@ -2,6 +2,7 @@ type BudgetDataSectionProps = {
   headerCode: string;
   projectName: string;
   clientName: string;
+  responsibleName: string;
   statusLabel: string;
 };
 
@@ -24,6 +25,7 @@ export default function BudgetDataSection({
   headerCode,
   projectName,
   clientName,
+  responsibleName,
   statusLabel,
 }: BudgetDataSectionProps) {
   const statusBadgeClasses = getStatusBadgeClasses(statusLabel);
@@ -36,7 +38,7 @@ export default function BudgetDataSection({
         </h2>
       </div>
 
-      <div className="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-5">
         <div className="rounded-md border border-border bg-surface p-4">
           <p className="text-xs uppercase tracking-wide text-text-neutral">
             Código
@@ -61,6 +63,15 @@ export default function BudgetDataSection({
           </p>
           <p className="mt-1 text-sm font-semibold text-text-strong">
             {clientName}
+          </p>
+        </div>
+
+        <div className="rounded-md border border-border bg-surface p-4">
+          <p className="text-xs uppercase tracking-wide text-text-neutral">
+            Responsable
+          </p>
+          <p className="mt-1 truncate text-sm font-semibold text-text-strong">
+            {responsibleName}
           </p>
         </div>
 

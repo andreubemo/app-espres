@@ -25,6 +25,7 @@ type StoredBudgetLine = {
 type StoredBudgetData = {
   code?: string;
   project?: string;
+  clientId?: string;
   date?: string;
   complexity?: string;
   dimensions?: {
@@ -38,10 +39,17 @@ type StoredBudgetData = {
   total?: number;
 };
 
+export type BudgetClientOption = {
+  id: string;
+  name: string;
+  email: string;
+};
+
 function buildBudgetSnapshot(input: Budget): Prisma.InputJsonValue {
   return {
     code: input.code,
     project: input.project,
+    clientId: input.clientId,
     date: input.date,
     complexity: input.complexity,
     dimensions: {
@@ -80,6 +88,7 @@ function cloneStoredBudgetData(data: StoredBudgetData): Prisma.InputJsonValue {
   return {
     code: data.code ?? "",
     project: data.project ?? "",
+    clientId: data.clientId ?? "",
     date: data.date ?? "",
     complexity: data.complexity ?? "",
     dimensions: {
@@ -108,6 +117,10 @@ function cloneStoredBudgetData(data: StoredBudgetData): Prisma.InputJsonValue {
   };
 }
 
+function stringifyComparableBudgetSnapshot(data: Prisma.InputJsonValue) {
+  return JSON.stringify(data);
+}
+
 async function getAuthenticatedUserContext() {
   const user = await requireInternalUser();
 
@@ -117,32 +130,6 @@ async function getAuthenticatedUserContext() {
   };
 }
 
-async function getOrCreatePendingClient(companyId: string) {
-  const pendingEmail = "pendiente@espres.local";
-
-  const existingClient = await prisma.client.findFirst({
-    where: {
-      companyId,
-      email: pendingEmail,
-    },
-  });
-
-  if (existingClient) {
-    return existingClient;
-  }
-
-  const hashedPassword = await bcrypt.hash("pendiente", 10);
-
-  return prisma.client.create({
-    data: {
-      name: "Cliente pendiente",
-      email: pendingEmail,
-      password: hashedPassword,
-      companyId,
-    },
-  });
-}
-
 async function getOwnedBudgetForAction(budgetId: string, companyId: string) {
   const budget = await prisma.budget.findFirst({
     where: {
@@ -150,9 +137,13 @@ async function getOwnedBudgetForAction(budgetId: string, companyId: string) {
       companyId,
     },
     include: {
-      client: true,
       versions: {
         orderBy: { version: "desc" },
+        select: {
+          id: true,
+          version: true,
+          data: true,
+        },
       },
     },
   });
@@ -180,6 +171,61 @@ function buildDuplicateReference(reference: string) {
   return `${reference}-COPIA`;
 }
 
+export async function getBudgetClientOptions(): Promise<BudgetClientOption[]> {
+  const { companyId } = await getAuthenticatedUserContext();
+
+  return prisma.client.findMany({
+    where: {
+      companyId,
+    },
+    orderBy: {
+      name: "asc",
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+  });
+}
+
+export async function createBudgetClient(input: {
+  name: string;
+  email: string;
+}): Promise<BudgetClientOption> {
+  const name = input.name.trim();
+  const email = input.email.trim().toLowerCase();
+
+  if (!name) {
+    throw new Error("El cliente debe tener nombre.");
+  }
+
+  if (!email) {
+    throw new Error("El cliente debe tener email.");
+  }
+
+  const { companyId } = await getAuthenticatedUserContext();
+  const hashedPassword = await bcrypt.hash(crypto.randomUUID(), 12);
+
+  const client = await prisma.client.create({
+    data: {
+      name,
+      email,
+      password: hashedPassword,
+      companyId,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+  });
+
+  revalidatePath("/clients");
+
+  return client;
+}
+
 export async function saveBudgetDraft(input: Budget) {
   if (!input.code.trim()) {
     throw new Error("El presupuesto debe tener un código.");
@@ -189,12 +235,29 @@ export async function saveBudgetDraft(input: Budget) {
     throw new Error("El presupuesto debe tener un proyecto.");
   }
 
+  if (!input.clientId.trim()) {
+    throw new Error("Selecciona un cliente para el presupuesto.");
+  }
+
   if (!input.lines.length) {
     throw new Error("Añade al menos una partida antes de guardar.");
   }
 
   const { userId, companyId } = await getAuthenticatedUserContext();
-  const client = await getOrCreatePendingClient(companyId);
+  const client = await prisma.client.findFirst({
+    where: {
+      id: input.clientId,
+      companyId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!client) {
+    throw new Error("El cliente seleccionado no existe.");
+  }
+
   const budgetData = buildBudgetSnapshot(input);
 
   const budget = await prisma.budget.create({
@@ -231,6 +294,108 @@ export async function saveBudgetDraft(input: Budget) {
     budgetId: budget.id,
     reference: budget.reference,
     version: budget.versions[0]?.version ?? 1,
+  };
+}
+
+export async function updateBudgetDraft(input: {
+  budgetId: string;
+  budget: Budget;
+}) {
+  const nextBudget = input.budget;
+
+  if (!input.budgetId?.trim()) {
+    throw new Error("Falta el identificador del presupuesto.");
+  }
+
+  if (!nextBudget.code.trim()) {
+    throw new Error("El presupuesto debe tener un código.");
+  }
+
+  if (!nextBudget.project.trim()) {
+    throw new Error("El presupuesto debe tener un proyecto.");
+  }
+
+  if (!nextBudget.clientId.trim()) {
+    throw new Error("Selecciona un cliente para el presupuesto.");
+  }
+
+  if (!nextBudget.lines.length) {
+    throw new Error("Añade al menos una partida antes de guardar.");
+  }
+
+  const { companyId } = await getAuthenticatedUserContext();
+  const storedBudget = await getOwnedBudgetForAction(input.budgetId, companyId);
+  const latestVersion = ensureBudgetHasVersion(storedBudget.versions);
+
+  const client = await prisma.client.findFirst({
+    where: {
+      id: nextBudget.clientId,
+      companyId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!client) {
+    throw new Error("El cliente seleccionado no existe.");
+  }
+
+  const latestData = parseStoredBudgetData(latestVersion.data);
+  const currentSnapshot = cloneStoredBudgetData({
+    ...latestData,
+    code: latestData.code ?? storedBudget.reference,
+    project: latestData.project ?? storedBudget.project,
+    clientId: latestData.clientId ?? storedBudget.clientId,
+  });
+  const nextSnapshot = buildBudgetSnapshot(nextBudget);
+
+  if (
+    stringifyComparableBudgetSnapshot(currentSnapshot) ===
+    stringifyComparableBudgetSnapshot(nextSnapshot)
+  ) {
+    return {
+      ok: true,
+      unchanged: true,
+      budgetId: storedBudget.id,
+      reference: storedBudget.reference,
+      version: latestVersion.version,
+    };
+  }
+
+  const nextVersionNumber = latestVersion.version + 1;
+
+  const createdVersion = await prisma.$transaction(async (tx) => {
+    await tx.budget.update({
+      where: { id: storedBudget.id },
+      data: {
+        reference: nextBudget.code,
+        project: nextBudget.project,
+        clientId: client.id,
+        status: "DRAFT",
+      },
+    });
+
+    return tx.budgetVersion.create({
+      data: {
+        budgetId: storedBudget.id,
+        version: nextVersionNumber,
+        sent: false,
+        data: nextSnapshot,
+      },
+    });
+  });
+
+  revalidatePath("/budgets");
+  revalidatePath(`/budgets/${storedBudget.id}`);
+  revalidatePath(`/budgets/${storedBudget.id}/edit`);
+
+  return {
+    ok: true,
+    unchanged: false,
+    budgetId: storedBudget.id,
+    reference: nextBudget.code,
+    version: createdVersion.version,
   };
 }
 
@@ -359,6 +524,50 @@ export async function duplicateBudgetDraft(budgetId: string) {
     budgetId: duplicatedBudget.id,
     reference: duplicatedBudget.reference,
     version: duplicatedBudget.versions[0]?.version ?? 1,
+  };
+}
+
+export async function deleteBudget(budgetId: string) {
+  if (!budgetId?.trim()) {
+    throw new Error("Falta el identificador del presupuesto.");
+  }
+
+  const { companyId } = await getAuthenticatedUserContext();
+  const budget = await prisma.budget.findFirst({
+    where: {
+      id: budgetId,
+      companyId,
+    },
+    select: {
+      id: true,
+      reference: true,
+    },
+  });
+
+  if (!budget) {
+    throw new Error("No se ha encontrado el presupuesto.");
+  }
+
+  await prisma.$transaction([
+    prisma.budgetVersion.deleteMany({
+      where: {
+        budgetId: budget.id,
+      },
+    }),
+    prisma.budget.delete({
+      where: {
+        id: budget.id,
+      },
+    }),
+  ]);
+
+  revalidatePath("/budgets");
+  revalidatePath(`/budgets/${budget.id}`);
+
+  return {
+    ok: true,
+    budgetId: budget.id,
+    reference: budget.reference,
   };
 }
 

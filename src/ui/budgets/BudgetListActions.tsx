@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, useTransition } from "react";
 
+import { deleteBudget } from "@/app/actions/budgets";
 import { Badge } from "@/ui/primitives/Badge";
 import { Button } from "@/ui/primitives/Button";
 
@@ -98,11 +100,15 @@ export default function BudgetListActions({
   budgetId,
   reference,
 }: BudgetListActionsProps) {
+  const router = useRouter();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isDeleting, startDeleteTransition] = useTransition();
   const menuRef = useRef<HTMLDivElement | null>(null);
   const detailHref = `/budgets/${budgetId}`;
+  const editHref = `/budgets/${budgetId}/edit`;
 
   useEffect(() => {
     if (!feedback) return;
@@ -136,26 +142,81 @@ export default function BudgetListActions({
 
   async function handleShare() {
     const url = `${window.location.origin}${detailHref}`;
+    const shareData = {
+      title: `Presupuesto ${reference}`,
+      text: `Presupuesto ${reference}`,
+      url,
+    };
 
     try {
-      await navigator.clipboard.writeText(url);
-      setFeedback("Link copiado");
+      if (navigator.share && navigator.canShare?.(shareData)) {
+        await navigator.share(shareData);
+        setFeedback("Presupuesto compartido");
+      } else {
+        await navigator.clipboard.writeText(url);
+        setFeedback("Link copiado");
+      }
     } catch {
-      setFeedback("No se pudo copiar el link");
+      setFeedback("No se pudo compartir");
     }
 
     setMenuOpen(false);
   }
 
-  function handleDownload() {
-    setFeedback("Descarga PDF en preparacion");
-    setMenuOpen(false);
+  async function handleDownload() {
+    setIsDownloading(true);
+
+    try {
+      const response = await fetch(`/api/budgets/${budgetId}/download`);
+
+      if (!response.ok) {
+        throw new Error("No se pudo descargar el presupuesto");
+      }
+
+      const blob = await response.blob();
+      const contentDisposition = response.headers.get("Content-Disposition");
+      const fileName =
+        contentDisposition?.match(/filename="(.+)"/)?.[1] ??
+        `${reference || "presupuesto"}.pdf`;
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      setFeedback("Descarga iniciada");
+      setMenuOpen(false);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "No se pudo descargar el presupuesto";
+      setFeedback(message);
+    } finally {
+      setIsDownloading(false);
+    }
   }
 
-  function handleDeletePlaceholder() {
-    setConfirmOpen(false);
-    setMenuOpen(false);
-    setFeedback("Borrado preparado para backend");
+  function handleDelete() {
+    startDeleteTransition(async () => {
+      try {
+        await deleteBudget(budgetId);
+        setConfirmOpen(false);
+        setMenuOpen(false);
+        setFeedback("Presupuesto eliminado");
+        router.refresh();
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "No se pudo eliminar el presupuesto";
+        setFeedback(message);
+      }
+    });
   }
 
   return (
@@ -179,7 +240,7 @@ export default function BudgetListActions({
             className="absolute right-0 z-30 mt-2 w-56 overflow-hidden rounded-lg border border-border bg-card-background shadow-lg"
           >
             <Link
-              href={detailHref}
+              href={editHref}
               role="menuitem"
               className="flex min-h-11 items-center gap-2 px-3 text-sm font-medium text-text-strong transition hover:bg-surface"
             >
@@ -201,10 +262,11 @@ export default function BudgetListActions({
               type="button"
               role="menuitem"
               onClick={handleDownload}
+              disabled={isDownloading}
               className="flex min-h-11 w-full items-center gap-2 px-3 text-left text-sm font-medium text-text-strong transition hover:bg-surface"
             >
               <ActionIcon type="download" />
-              Descargar
+              {isDownloading ? "Descargando..." : "Descargar"}
             </button>
 
             <button
@@ -240,9 +302,8 @@ export default function BudgetListActions({
               &iquest;Seguro que quieres eliminar este presupuesto?
             </h2>
             <p className="mt-2 text-sm leading-5 text-text-neutral">
-              Acci&oacute;n irreversible. El backend de borrado todav&iacute;a
-              no est&aacute; conectado, as&iacute; que esta fase solo deja
-              preparada la confirmaci&oacute;n segura para {reference}.
+              Acci&oacute;n irreversible. Se eliminar&aacute;n el presupuesto y
+              sus versiones guardadas para {reference}.
             </p>
 
             <div className="mt-4 flex justify-end gap-2">
@@ -254,11 +315,12 @@ export default function BudgetListActions({
                 Cancelar
               </Button>
               <Button
-                onClick={handleDeletePlaceholder}
+                disabled={isDeleting}
+                onClick={handleDelete}
                 size="sm"
                 variant="danger"
               >
-                Entendido
+                {isDeleting ? "Eliminando..." : "Eliminar"}
               </Button>
             </div>
           </div>
