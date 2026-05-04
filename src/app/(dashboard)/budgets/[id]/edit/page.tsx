@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { Budget, BudgetComplexity, BudgetLine } from "@/domain/budgets/budget.model";
 import { getBudgetClientOptions } from "@/app/actions/budgets";
 import { getInternalUserContext } from "@/lib/access-control";
+import { getBudgetDiscountPolicy } from "@/lib/budget-discounts";
 import { prisma } from "@/lib/prisma";
 import type { StoredBudgetData, StoredBudgetLine } from "../budget-detail.types";
 import EditBudgetClient from "./EditBudgetClient";
@@ -128,6 +129,12 @@ export default async function EditBudgetPage({ params }: PageProps) {
       ? data.subtotal
       : lines.reduce((acc, line) => acc + line.total, 0);
   const total = typeof data.total === "number" ? data.total : subtotal;
+  const totalBeforeDiscount =
+    typeof data.totalBeforeDiscount === "number"
+      ? data.totalBeforeDiscount
+      : total;
+  const discountAmount =
+    typeof data.discountAmount === "number" ? data.discountAmount : 0;
 
   const initialBudget: Budget = {
     code: data.code?.trim() || budget.reference,
@@ -135,6 +142,9 @@ export default async function EditBudgetPage({ params }: PageProps) {
     clientId: data.clientId?.trim() || budget.clientId,
     date: data.date || new Date().toISOString().slice(0, 10),
     complexity: normalizeComplexity(data.complexity),
+    notes: data.notes?.trim() || "",
+    discountPercent:
+      typeof data.discountPercent === "number" ? data.discountPercent : 0,
     dimensions: {
       width: toNumber(data.dimensions?.width),
       length: toNumber(data.dimensions?.length),
@@ -143,6 +153,8 @@ export default async function EditBudgetPage({ params }: PageProps) {
     },
     lines,
     subtotal,
+    totalBeforeDiscount,
+    discountAmount,
     total,
   };
 
@@ -154,6 +166,7 @@ export default async function EditBudgetPage({ params }: PageProps) {
       currentVersion={latestVersion.version}
       initialBudget={initialBudget}
       clients={clients}
+      discountPolicy={getBudgetDiscountPolicy(user.role)}
     />
   );
 }

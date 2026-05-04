@@ -21,6 +21,8 @@ type StoredBudgetData = {
   project?: string;
   date?: string;
   complexity?: string;
+  notes?: string;
+  discountPercent?: number;
   dimensions?: {
     width?: number;
     length?: number;
@@ -29,6 +31,8 @@ type StoredBudgetData = {
   };
   lines?: StoredBudgetLine[];
   subtotal?: number;
+  totalBeforeDiscount?: number;
+  discountAmount?: number;
   total?: number;
 };
 
@@ -177,6 +181,47 @@ function drawMetric(
     .text(value, x + 12, y + 31, { width: width - 24, ellipsis: true });
 }
 
+function formatPercent(value?: number) {
+  const safeValue = Number.isFinite(value) ? Number(value) : 0;
+
+  return new Intl.NumberFormat("es-ES", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(safeValue);
+}
+
+function drawNotesCard(doc: PDFKit.PDFDocument, notes?: string) {
+  const text = notes?.trim() || "Sin notas para este presupuesto.";
+  const x = PAGE.margin;
+  const width = PAGE.width - PAGE.margin * 2;
+  const textWidth = width - 28;
+  const textHeight = doc
+    .font("Helvetica")
+    .fontSize(9)
+    .heightOfString(text, { width: textWidth });
+  const height = Math.max(72, textHeight + 48);
+
+  ensureSpace(doc, height + 18);
+
+  const y = doc.y;
+  drawCard(doc, x, y, width, height);
+  doc
+    .fillColor(COLORS.primary)
+    .font("Helvetica-Bold")
+    .fontSize(9)
+    .text("NOTAS", x + 14, y + 14, { characterSpacing: 1.2 });
+  doc
+    .fillColor(COLORS.ink)
+    .font("Helvetica")
+    .fontSize(9)
+    .text(text, x + 14, y + 34, {
+      width: textWidth,
+      lineGap: 2,
+    });
+
+  doc.y = y + height + 22;
+}
+
 function ensureSpace(doc: PDFKit.PDFDocument, neededHeight: number) {
   if (doc.y + neededHeight <= PAGE.height - PAGE.margin) return;
   doc.addPage();
@@ -215,6 +260,9 @@ async function createPdfBuffer(
   },
   data: StoredBudgetData,
   subtotal: number,
+  totalBeforeDiscount: number,
+  discountPercent: number,
+  discountAmount: number,
   total: number
 ) {
   const chunks: Buffer[] = [];
@@ -336,20 +384,49 @@ async function createPdfBuffer(
       width: summaryW - 134,
       align: "right",
     });
+
+  if (discountPercent > 0 && discountAmount > 0) {
+    doc
+      .fillColor(COLORS.muted)
+      .font("Helvetica")
+      .fontSize(9)
+      .text(`Antes dto.`, summary2X + 14, summaryY + 57, { width: 92 })
+      .fillColor(COLORS.ink)
+      .font("Helvetica-Bold")
+      .text(formatCurrency(totalBeforeDiscount), summary2X + 120, summaryY + 57, {
+        width: summaryW - 134,
+        align: "right",
+      })
+      .fillColor(COLORS.primary)
+      .font("Helvetica-Bold")
+      .text(`Dto. ${formatPercent(discountPercent)}%`, summary2X + 14, summaryY + 74, {
+        width: 92,
+      })
+      .text(`-${formatCurrency(discountAmount)}`, summary2X + 120, summaryY + 74, {
+        width: summaryW - 134,
+        align: "right",
+      });
+  }
+
+  const totalLabelY = discountPercent > 0 && discountAmount > 0 ? 82 : 64;
+  const totalValueY = discountPercent > 0 && discountAmount > 0 ? 76 : 58;
+
   doc
     .fillColor(COLORS.muted)
     .font("Helvetica")
     .fontSize(10)
-    .text("Total", summary2X + 14, summaryY + 64, { width: 92 })
+    .text("Total", summary2X + 14, summaryY + totalLabelY, { width: 92 })
     .fillColor(COLORS.ink)
     .font("Helvetica-Bold")
     .fontSize(16)
-    .text(formatCurrency(total), summary2X + 100, summaryY + 58, {
+    .text(formatCurrency(total), summary2X + 100, summaryY + totalValueY, {
       width: summaryW - 114,
       align: "right",
     });
 
   doc.y = summaryY + 122;
+
+  drawNotesCard(doc, data.notes);
 
   doc
     .fillColor(COLORS.ink)
@@ -508,9 +585,25 @@ export async function GET(_request: Request, context: RouteContext) {
     typeof data.subtotal === "number"
       ? data.subtotal
       : lines.reduce((acc, line) => acc + getLineTotal(line), 0);
+  const totalBeforeDiscount =
+    typeof data.totalBeforeDiscount === "number"
+      ? data.totalBeforeDiscount
+      : data.total ?? subtotal;
+  const discountPercent =
+    typeof data.discountPercent === "number" ? data.discountPercent : 0;
+  const discountAmount =
+    typeof data.discountAmount === "number" ? data.discountAmount : 0;
   const total = typeof data.total === "number" ? data.total : subtotal;
   const reference = data.code?.trim() || budget.reference;
-  const pdf = await createPdfBuffer(budget, data, subtotal, total);
+  const pdf = await createPdfBuffer(
+    budget,
+    data,
+    subtotal,
+    totalBeforeDiscount,
+    discountPercent,
+    discountAmount,
+    total
+  );
 
   return new NextResponse(new Uint8Array(pdf), {
     headers: {

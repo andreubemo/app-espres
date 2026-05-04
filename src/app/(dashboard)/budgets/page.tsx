@@ -241,11 +241,8 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
           }
         `}</style>
       ) : null}
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 pb-6 pt-0 lg:px-8">
         <header className="space-y-1">
-          <p className="text-xs font-semibold uppercase text-primary">
-            Gestión de presupuestos
-          </p>
           <h1 className="text-2xl font-semibold tracking-tight text-text-strong">
             Presupuestos
           </h1>
