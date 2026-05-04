@@ -18,6 +18,7 @@ import {
   updateLineQuantity,
 } from "@/domain/budgets/budget.service";
 import type { BudgetClientOption } from "@/app/actions/budgets";
+import type { BudgetDiscountPolicy } from "@/lib/budget-discounts";
 import BudgetBaseModal from "@/ui/budgets/BudgetBaseModal";
 import BudgetLinesPanel from "@/ui/budgets/BudgetLinesPanel";
 import BudgetTotals from "@/ui/budgets/BudgetTotals";
@@ -34,6 +35,7 @@ type EditBudgetClientProps = {
   currentVersion: number;
   initialBudget: Budget;
   clients: BudgetClientOption[];
+  discountPolicy: BudgetDiscountPolicy;
 };
 
 function formatCurrency(value?: number) {
@@ -52,6 +54,8 @@ function normalizeBudgetForCompare(budget: Budget) {
     clientId: budget.clientId,
     date: budget.date,
     complexity: budget.complexity,
+    notes: budget.notes,
+    discountPercent: budget.discountPercent,
     dimensions: {
       width: budget.dimensions.width,
       length: budget.dimensions.length,
@@ -72,6 +76,8 @@ function normalizeBudgetForCompare(budget: Budget) {
       total: line.total,
     })),
     subtotal: budget.subtotal,
+    totalBeforeDiscount: budget.totalBeforeDiscount,
+    discountAmount: budget.discountAmount,
     total: budget.total,
   };
 }
@@ -81,6 +87,7 @@ export default function EditBudgetClient({
   currentVersion,
   initialBudget,
   clients: initialClients,
+  discountPolicy,
 }: EditBudgetClientProps) {
   const router = useRouter();
   const [budget, setBudget] = useState<Budget>(initialBudget);
@@ -215,14 +222,16 @@ export default function EditBudgetClient({
                 width: budget.dimensions.width,
                 length: budget.dimensions.length,
                 complexity: budget.complexity,
+                notes: budget.notes,
+                discountPercent: budget.discountPercent,
               }}
               stepLabel="Información del presupuesto"
               title="Editar datos base"
               description="Modifica referencia, proyecto, cliente, fecha, dimensiones o complejidad. Si cambian dimensiones o complejidad, se recalculan los totales en esta edición."
               submitLabel="Aplicar datos base"
-              submitHelp="Aplica estos datos a la edición actual. La versión nueva se crea al guardar cambios."
               summaryTitle="Resumen editado"
               clients={clients}
+              discountPolicy={discountPolicy}
               clientError={clientError}
               isCreatingClient={isCreatingClient}
               onCreateClient={handleCreateClient}
@@ -337,7 +346,13 @@ export default function EditBudgetClient({
                   </p>
                 </div>
 
-                <BudgetTotals subtotal={budget.subtotal} total={budget.total} />
+                <BudgetTotals
+                  subtotal={budget.subtotal}
+                  totalBeforeDiscount={budget.totalBeforeDiscount}
+                  discountPercent={budget.discountPercent}
+                  discountAmount={budget.discountAmount}
+                  total={budget.total}
+                />
 
                 <button
                   type="button"

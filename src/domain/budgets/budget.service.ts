@@ -13,6 +13,8 @@ export type CreateEmptyBudgetInput = {
   clientId: string;
   date: string;
   complexity: BudgetComplexity;
+  notes?: string;
+  discountPercent?: number;
   width: number;
   length: number;
 };
@@ -47,11 +49,26 @@ function calculateDimensions(width: number, length: number) {
   };
 }
 
-function calculateTotals(lines: BudgetLine[], complexity: BudgetComplexity) {
-  const subtotal = round(lines.reduce((sum, line) => sum + line.total, 0));
-  const total = round(subtotal * COMPLEXITY_FACTOR[complexity]);
+function normalizeDiscountPercent(value?: number) {
+  if (!Number.isFinite(value)) return 0;
 
-  return { subtotal, total };
+  return Math.min(100, Math.max(0, round(value ?? 0)));
+}
+
+function calculateTotals(
+  lines: BudgetLine[],
+  complexity: BudgetComplexity,
+  discountPercent = 0
+) {
+  const subtotal = round(lines.reduce((sum, line) => sum + line.total, 0));
+  const totalBeforeDiscount = round(subtotal * COMPLEXITY_FACTOR[complexity]);
+  const normalizedDiscountPercent = normalizeDiscountPercent(discountPercent);
+  const discountAmount = round(
+    totalBeforeDiscount * (normalizedDiscountPercent / 100)
+  );
+  const total = round(Math.max(0, totalBeforeDiscount - discountAmount));
+
+  return { subtotal, totalBeforeDiscount, discountAmount, total };
 }
 
 export function createEmptyBudget(data: CreateEmptyBudgetInput): Budget {
@@ -61,9 +78,13 @@ export function createEmptyBudget(data: CreateEmptyBudgetInput): Budget {
     clientId: data.clientId,
     date: data.date,
     complexity: data.complexity,
+    notes: data.notes?.trim() ?? "",
+    discountPercent: normalizeDiscountPercent(data.discountPercent),
     dimensions: calculateDimensions(data.width, data.length),
     lines: [],
     subtotal: 0,
+    totalBeforeDiscount: 0,
+    discountAmount: 0,
     total: 0,
   };
 }
@@ -102,24 +123,30 @@ export function addLine(budget: Budget, input: AddBudgetLineInput): Budget {
   };
 
   const lines = [...budget.lines, line];
-  const { subtotal, total } = calculateTotals(lines, budget.complexity);
+  const { subtotal, totalBeforeDiscount, discountAmount, total } =
+    calculateTotals(lines, budget.complexity, budget.discountPercent);
 
   return {
     ...budget,
     lines,
     subtotal,
+    totalBeforeDiscount,
+    discountAmount,
     total,
   };
 }
 
 export function removeLine(budget: Budget, id: string): Budget {
   const lines = budget.lines.filter((line) => line.id !== id);
-  const { subtotal, total } = calculateTotals(lines, budget.complexity);
+  const { subtotal, totalBeforeDiscount, discountAmount, total } =
+    calculateTotals(lines, budget.complexity, budget.discountPercent);
 
   return {
     ...budget,
     lines,
     subtotal,
+    totalBeforeDiscount,
+    discountAmount,
     total,
   };
 }
@@ -149,7 +176,9 @@ export function updateBudgetBase(
       total: round(quantity * line.unitPrice),
     };
   });
-  const { subtotal, total } = calculateTotals(lines, data.complexity);
+  const discountPercent = normalizeDiscountPercent(data.discountPercent);
+  const { subtotal, totalBeforeDiscount, discountAmount, total } =
+    calculateTotals(lines, data.complexity, discountPercent);
 
   return {
     ...budget,
@@ -158,9 +187,13 @@ export function updateBudgetBase(
     clientId: data.clientId,
     date: data.date,
     complexity: data.complexity,
+    notes: data.notes?.trim() ?? "",
+    discountPercent,
     dimensions,
     lines,
     subtotal,
+    totalBeforeDiscount,
+    discountAmount,
     total,
   };
 }
@@ -182,12 +215,15 @@ export function updateLineQuantity(
       total: round(nextQuantity * line.unitPrice),
     };
   });
-  const { subtotal, total } = calculateTotals(lines, budget.complexity);
+  const { subtotal, totalBeforeDiscount, discountAmount, total } =
+    calculateTotals(lines, budget.complexity, budget.discountPercent);
 
   return {
     ...budget,
     lines,
     subtotal,
+    totalBeforeDiscount,
+    discountAmount,
     total,
   };
 }

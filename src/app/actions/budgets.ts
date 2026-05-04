@@ -4,8 +4,17 @@ import bcrypt from "bcrypt";
 import { revalidatePath } from "next/cache";
 
 import { Budget } from "@/domain/budgets/budget.model";
+import {
+  COMPLEXITY_FACTOR,
+  round,
+} from "@/domain/rules/pricing.rules";
 import { Prisma } from "@/generated/prisma";
 import { requireInternalUser } from "@/lib/access-control";
+import {
+  assertDiscountAllowedForPolicy,
+  getBudgetDiscountPolicy,
+  type BudgetDiscountPolicy,
+} from "@/lib/budget-discounts";
 import { prisma } from "@/lib/prisma";
 
 type StoredBudgetLine = {
@@ -28,6 +37,10 @@ type StoredBudgetData = {
   clientId?: string;
   date?: string;
   complexity?: string;
+  notes?: string;
+  discountPercent?: number;
+  totalBeforeDiscount?: number;
+  discountAmount?: number;
   dimensions?: {
     width?: number;
     length?: number;
@@ -45,6 +58,30 @@ export type BudgetClientOption = {
   email: string;
 };
 
+export type BudgetFormContext = {
+  clients: BudgetClientOption[];
+  discountPolicy: BudgetDiscountPolicy;
+};
+
+function normalizeBudgetMoney(input: Budget, discountPercent: number): Budget {
+  const subtotal = round(input.lines.reduce((sum, line) => sum + line.total, 0));
+  const totalBeforeDiscount = round(
+    subtotal * COMPLEXITY_FACTOR[input.complexity]
+  );
+  const discountAmount = round(totalBeforeDiscount * (discountPercent / 100));
+  const total = round(Math.max(0, totalBeforeDiscount - discountAmount));
+
+  return {
+    ...input,
+    notes: input.notes?.trim() ?? "",
+    discountPercent,
+    subtotal,
+    totalBeforeDiscount,
+    discountAmount,
+    total,
+  };
+}
+
 function buildBudgetSnapshot(input: Budget): Prisma.InputJsonValue {
   return {
     code: input.code,
@@ -52,6 +89,8 @@ function buildBudgetSnapshot(input: Budget): Prisma.InputJsonValue {
     clientId: input.clientId,
     date: input.date,
     complexity: input.complexity,
+    notes: input.notes,
+    discountPercent: input.discountPercent,
     dimensions: {
       width: input.dimensions.width,
       length: input.dimensions.length,
@@ -72,6 +111,8 @@ function buildBudgetSnapshot(input: Budget): Prisma.InputJsonValue {
       total: line.total,
     })),
     subtotal: input.subtotal,
+    totalBeforeDiscount: input.totalBeforeDiscount,
+    discountAmount: input.discountAmount,
     total: input.total,
   };
 }
@@ -91,6 +132,8 @@ function cloneStoredBudgetData(data: StoredBudgetData): Prisma.InputJsonValue {
     clientId: data.clientId ?? "",
     date: data.date ?? "",
     complexity: data.complexity ?? "",
+    notes: data.notes ?? "",
+    discountPercent: data.discountPercent ?? 0,
     dimensions: {
       width: data.dimensions?.width ?? 0,
       length: data.dimensions?.length ?? 0,
@@ -113,6 +156,8 @@ function cloneStoredBudgetData(data: StoredBudgetData): Prisma.InputJsonValue {
         }))
       : [],
     subtotal: data.subtotal ?? 0,
+    totalBeforeDiscount: data.totalBeforeDiscount ?? data.total ?? 0,
+    discountAmount: data.discountAmount ?? 0,
     total: data.total ?? 0,
   };
 }
@@ -127,6 +172,7 @@ async function getAuthenticatedUserContext() {
   return {
     userId: user.id,
     companyId: user.companyId,
+    role: user.role,
   };
 }
 
@@ -189,6 +235,28 @@ export async function getBudgetClientOptions(): Promise<BudgetClientOption[]> {
   });
 }
 
+export async function getBudgetFormContext(): Promise<BudgetFormContext> {
+  const { companyId, role } = await getAuthenticatedUserContext();
+  const clients = await prisma.client.findMany({
+    where: {
+      companyId,
+    },
+    orderBy: {
+      name: "asc",
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+  });
+
+  return {
+    clients,
+    discountPolicy: getBudgetDiscountPolicy(role),
+  };
+}
+
 export async function createBudgetClient(input: {
   name: string;
   email: string;
@@ -227,26 +295,33 @@ export async function createBudgetClient(input: {
 }
 
 export async function saveBudgetDraft(input: Budget) {
-  if (!input.code.trim()) {
+  const { userId, companyId, role } = await getAuthenticatedUserContext();
+  const discountPolicy = getBudgetDiscountPolicy(role);
+  const discountPercent = assertDiscountAllowedForPolicy(
+    input.discountPercent,
+    discountPolicy
+  );
+  const normalizedBudget = normalizeBudgetMoney(input, discountPercent);
+
+  if (!normalizedBudget.code.trim()) {
     throw new Error("El presupuesto debe tener un código.");
   }
 
-  if (!input.project.trim()) {
+  if (!normalizedBudget.project.trim()) {
     throw new Error("El presupuesto debe tener un proyecto.");
   }
 
-  if (!input.clientId.trim()) {
+  if (!normalizedBudget.clientId.trim()) {
     throw new Error("Selecciona un cliente para el presupuesto.");
   }
 
-  if (!input.lines.length) {
+  if (!normalizedBudget.lines.length) {
     throw new Error("Añade al menos una partida antes de guardar.");
   }
 
-  const { userId, companyId } = await getAuthenticatedUserContext();
   const client = await prisma.client.findFirst({
     where: {
-      id: input.clientId,
+      id: normalizedBudget.clientId,
       companyId,
     },
     select: {
@@ -258,12 +333,12 @@ export async function saveBudgetDraft(input: Budget) {
     throw new Error("El cliente seleccionado no existe.");
   }
 
-  const budgetData = buildBudgetSnapshot(input);
+  const budgetData = buildBudgetSnapshot(normalizedBudget);
 
   const budget = await prisma.budget.create({
     data: {
-      reference: input.code,
-      project: input.project,
+      reference: normalizedBudget.code,
+      project: normalizedBudget.project,
       status: "DRAFT",
       companyId,
       clientId: client.id,
@@ -301,7 +376,13 @@ export async function updateBudgetDraft(input: {
   budgetId: string;
   budget: Budget;
 }) {
-  const nextBudget = input.budget;
+  const { companyId, role } = await getAuthenticatedUserContext();
+  const discountPolicy = getBudgetDiscountPolicy(role);
+  const discountPercent = assertDiscountAllowedForPolicy(
+    input.budget.discountPercent,
+    discountPolicy
+  );
+  const nextBudget = normalizeBudgetMoney(input.budget, discountPercent);
 
   if (!input.budgetId?.trim()) {
     throw new Error("Falta el identificador del presupuesto.");
@@ -323,7 +404,6 @@ export async function updateBudgetDraft(input: {
     throw new Error("Añade al menos una partida antes de guardar.");
   }
 
-  const { companyId } = await getAuthenticatedUserContext();
   const storedBudget = await getOwnedBudgetForAction(input.budgetId, companyId);
   const latestVersion = ensureBudgetHasVersion(storedBudget.versions);
 

@@ -8,6 +8,7 @@ import BudgetDataSection from "./BudgetDataSection";
 import BudgetDimensionsSection from "./BudgetDimensionsSection";
 import BudgetHeader from "./BudgetHeader";
 import BudgetLinesSection from "./BudgetLinesSection";
+import BudgetNotesSection from "./BudgetNotesSection";
 import BudgetSectionNav from "./BudgetSectionNav";
 import BudgetSummaryCard from "./BudgetSummaryCard";
 import BudgetVersionContextCard from "./BudgetVersionContextCard";
@@ -196,6 +197,14 @@ export default async function BudgetDetailPage({
       : lines.reduce((acc, line) => acc + getLineTotal(line), 0);
 
   const total = typeof data.total === "number" ? data.total : subtotal;
+  const totalBeforeDiscount =
+    typeof data.totalBeforeDiscount === "number"
+      ? data.totalBeforeDiscount
+      : total;
+  const discountPercent =
+    typeof data.discountPercent === "number" ? data.discountPercent : 0;
+  const discountAmount =
+    typeof data.discountAmount === "number" ? data.discountAmount : 0;
 
   const headerCode = data.code || budget.reference || "Sin código";
   const projectName = data.project || "Sin nombre";
@@ -328,6 +337,10 @@ export default async function BudgetDetailPage({
               />
             </section>
 
+            <section id="notas" className="scroll-mt-24">
+              <BudgetNotesSection notes={data.notes} />
+            </section>
+
             <section id="dimensiones" className="scroll-mt-24">
               <BudgetDimensionsSection
                 width={data.dimensions?.width}
@@ -350,7 +363,13 @@ export default async function BudgetDetailPage({
           </div>
 
           <aside className="space-y-4 xl:sticky xl:top-[72px] xl:self-start">
-            <BudgetSummaryCard subtotal={subtotal} total={total} />
+            <BudgetSummaryCard
+              subtotal={subtotal}
+              totalBeforeDiscount={totalBeforeDiscount}
+              discountPercent={discountPercent}
+              discountAmount={discountAmount}
+              total={total}
+            />
 
             <BudgetVersionContextCard
               viewedVersionNumber={viewedVersionNumber}

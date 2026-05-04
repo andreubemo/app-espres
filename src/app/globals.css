@@ -10,9 +10,9 @@
   --color-primary-soft: #f2a97e;
 
   /* Surfaces */
-  --color-app-background: #f2f2f2;
-  --color-card-background: #ffffff;
-  --color-border: #e5e5e5;
+  --color-app-background: #eeeeec;
+  --color-card-background: #fffefd;
+  --color-border: #d9d7d2;
 
   /* Text */
   --color-text-neutral: #595959;
@@ -27,8 +27,8 @@
   /* Shape and effects */
   --radius-control: 0.375rem;
   --radius-card: 0.5rem;
-  --shadow-card: 0 1px 2px rgb(31 31 31 / 0.06),
-    0 8px 24px rgb(31 31 31 / 0.04);
+  --shadow-card: 0 1px 3px rgb(31 31 31 / 0.08),
+    0 12px 30px rgb(31 31 31 / 0.06);
   --focus-ring: 0 0 0 3px rgb(242 96 12 / 0.22);
 
   /* Typography */
@@ -43,19 +43,21 @@
   --color-primary: #f2600c;
   --color-primary-strong: #f2490c;
   --color-primary-soft: #f2a97e;
-  --color-app-background: #f2f2f2;
-  --color-card-background: #ffffff;
-  --color-border: #e5e5e5;
+  --color-app-background: #eeeeec;
+  --color-card-background: #fffefd;
+  --color-border: #d9d7d2;
   --color-text-neutral: #595959;
   --color-text-strong: #1f1f1f;
-  --color-background: #f2f2f2;
+  --color-background: #eeeeec;
   --color-foreground: #1f1f1f;
   --color-muted: #595959;
-  --color-surface: #f2f2f2;
+  --color-surface: #eeeeec;
   --radius-control: 0.375rem;
   --radius-card: 0.5rem;
-  --shadow-card: 0 1px 2px rgb(31 31 31 / 0.06),
-    0 8px 24px rgb(31 31 31 / 0.04);
+  --shadow-card: 0 1px 3px rgb(31 31 31 / 0.08),
+    0 12px 30px rgb(31 31 31 / 0.06);
+  --shadow-sm: 0 1px 3px rgb(31 31 31 / 0.08),
+    0 12px 30px rgb(31 31 31 / 0.06);
 }
 
 /* =========================

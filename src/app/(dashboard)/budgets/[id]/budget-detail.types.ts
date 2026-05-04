@@ -26,6 +26,8 @@ export type StoredBudgetData = {
   clientId?: string;
   date?: string;
   complexity?: string;
+  notes?: string;
+  discountPercent?: number;
   dimensions?: {
     width?: number;
     length?: number;
@@ -34,6 +36,8 @@ export type StoredBudgetData = {
   };
   lines?: StoredBudgetLine[];
   subtotal?: number;
+  totalBeforeDiscount?: number;
+  discountAmount?: number;
   total?: number;
 };
 

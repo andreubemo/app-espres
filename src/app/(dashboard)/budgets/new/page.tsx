@@ -4,30 +4,26 @@ import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import { Budget } from "@/domain/budgets/budget.model";
-import {
-  createEmptyBudget,
-  addLine,
-  removeLine,
-  updateLineQuantity,
-} from "@/domain/budgets/budget.service";
-
 import {
   createBudgetClient,
-  getBudgetClientOptions,
+  getBudgetFormContext,
   saveBudgetDraft,
 } from "@/app/actions/budgets";
 import type { BudgetClientOption } from "@/app/actions/budgets";
-
+import { Budget } from "@/domain/budgets/budget.model";
+import {
+  addLine,
+  createEmptyBudget,
+  removeLine,
+  updateLineQuantity,
+} from "@/domain/budgets/budget.service";
+import { getBudgetDiscountPolicy } from "@/lib/budget-discounts";
 import BudgetBaseModal from "@/ui/budgets/BudgetBaseModal";
 import BudgetLinesPanel from "@/ui/budgets/BudgetLinesPanel";
-import BudgetTotals from "@/ui/budgets/BudgetTotals";
 
 const BudgetWizardFromCatalog = dynamic(
   () => import("@/ui/budgets/BudgetWizardFromCatalog"),
-  {
-    ssr: false,
-  }
+  { ssr: false }
 );
 
 type WizardStep = 1 | 2 | 3;
@@ -39,31 +35,23 @@ function getCurrentStep(budget: Budget | null, wizardOpen: boolean): WizardStep 
 }
 
 function getStepTitle(step: WizardStep) {
-  switch (step) {
-    case 1:
-      return "Datos base del presupuesto";
-    case 2:
-      return "Selección guiada de partidas";
-    case 3:
-      return "Revisión final";
-    default:
-      return "Nuevo presupuesto";
-  }
+  if (step === 1) return "Datos base del presupuesto";
+  if (step === 2) return "Seleccion de partidas";
+  return "Revision final";
 }
 
 function getStepDescription(step: WizardStep, budget: Budget | null) {
-  switch (step) {
-    case 1:
-      return "Define el contexto inicial antes de empezar a añadir partidas.";
-    case 2:
-      return "Avanza familia por familia y añade únicamente las partidas que necesites.";
-    case 3:
-      return budget?.lines.length
-        ? "Revisa el presupuesto antes de guardarlo como borrador."
-        : "Todavía no hay partidas. Vuelve al selector para seguir construyendo el presupuesto.";
-    default:
-      return "";
+  if (step === 1) {
+    return "Define el contexto inicial antes de empezar a anadir partidas.";
   }
+
+  if (step === 2) {
+    return "Avanza familia por familia y anade unicamente las partidas que necesites.";
+  }
+
+  return budget?.lines.length
+    ? "Revisa el presupuesto antes de guardarlo como borrador."
+    : "Todavia no hay partidas. Vuelve al selector para seguir construyendo el presupuesto.";
 }
 
 function getComplexityLabel(value?: string) {
@@ -96,6 +84,9 @@ export default function NewBudgetPage() {
 
   const [budget, setBudget] = useState<Budget | null>(null);
   const [clients, setClients] = useState<BudgetClientOption[]>([]);
+  const [discountPolicy, setDiscountPolicy] = useState(() =>
+    getBudgetDiscountPolicy("WORKER")
+  );
   const [clientError, setClientError] = useState<string | null>(null);
   const [wizardOpen, setWizardOpen] = useState(true);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
@@ -103,20 +94,21 @@ export default function NewBudgetPage() {
   const [isCreatingClient, startCreateClientTransition] = useTransition();
 
   const currentStep = getCurrentStep(budget, wizardOpen);
-
-  const canSave = useMemo(() => {
-    return Boolean(budget && budget.lines.length > 0 && !isSaving);
-  }, [budget, isSaving]);
+  const canSave = useMemo(
+    () => Boolean(budget && budget.lines.length > 0 && !isSaving),
+    [budget, isSaving]
+  );
 
   useEffect(() => {
     let cancelled = false;
 
-    async function loadClients() {
+    async function loadContext() {
       try {
-        const result = await getBudgetClientOptions();
+        const result = await getBudgetFormContext();
 
         if (!cancelled) {
-          setClients(result);
+          setClients(result.clients);
+          setDiscountPolicy(result.discountPolicy);
         }
       } catch (error) {
         if (!cancelled) {
@@ -129,7 +121,7 @@ export default function NewBudgetPage() {
       }
     }
 
-    loadClients();
+    loadContext();
 
     return () => {
       cancelled = true;
@@ -162,7 +154,8 @@ export default function NewBudgetPage() {
     if (!budget) return;
 
     if (budget.lines.length === 0) {
-      setSaveMessage("Añade al menos una partida antes de guardar el borrador.");
+      setSaveMessage("Anade al menos una partida antes de guardar el borrador.");
+      setWizardOpen(true);
       return;
     }
 
@@ -171,10 +164,6 @@ export default function NewBudgetPage() {
 
     try {
       const result = await saveBudgetDraft(budget);
-
-      setSaveMessage(
-        `Borrador guardado correctamente. Referencia: ${result.reference}`
-      );
 
       router.push(`/budgets?createdBudget=${result.budgetId}`);
       router.refresh();
@@ -190,95 +179,138 @@ export default function NewBudgetPage() {
   }
 
   return (
-    <main className="min-h-screen bg-surface">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-3 sm:px-4 sm:py-6 lg:px-8">
-        {budget ? (
-        <section className="rounded-lg border border-border bg-card-background shadow-sm">
-          <div className="space-y-4 p-4 sm:p-4">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <p className="text-xs font-medium uppercase tracking-[0.18em] text-text-neutral">
-                    Nuevo presupuesto
-                  </p>
-
-                  <h1 className="text-2xl font-semibold tracking-tight text-text-strong sm:text-3xl">
-                    {getStepTitle(currentStep)}
-                  </h1>
-
-                  <p className="max-w-2xl text-sm text-text-neutral">
-                    {getStepDescription(currentStep, budget)}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <span
-                    className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${
-                      currentStep === 1
-                        ? "border-primary bg-primary text-white"
-                        : "border-border bg-surface text-text-neutral"
-                    }`}
-                  >
-                    1. Base
-                  </span>
-
-                  <span
-                    className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${
-                      currentStep === 2
-                        ? "border-primary bg-primary text-white"
-                        : "border-border bg-surface text-text-neutral"
-                    }`}
-                  >
-                    2. Partidas
-                  </span>
-
-                  <span
-                    className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${
-                      currentStep === 3
-                        ? "border-primary bg-primary text-white"
-                        : "border-border bg-surface text-text-neutral"
-                    }`}
-                  >
-                    3. Revisión
-                  </span>
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-3 xl:w-[560px]">
-                <div className="rounded-md border border-border bg-surface p-4">
-                  <p className="text-xs uppercase tracking-wide text-text-neutral">
-                    Paso actual
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-text-strong">
-                    {currentStep} de 3
-                  </p>
-                </div>
-
-                <div className="rounded-md border border-border bg-surface p-4">
-                  <p className="text-xs uppercase tracking-wide text-text-neutral">
-                    Partidas
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-text-strong">
-                    {budget?.lines.length ?? 0}
-                  </p>
-                </div>
-
-                <div className="rounded-md border border-border bg-surface p-4 sm:col-span-3 xl:col-span-1 xl:text-right">
-                  <p className="text-xs uppercase tracking-wide text-text-neutral">
-                    Total actual
-                  </p>
-                  <p className="mt-1 text-2xl font-semibold tracking-tight text-text-strong">
-                    {formatCurrency(budget?.total ?? 0)}
-                  </p>
-                </div>
-              </div>
+    <main className="-mt-4 min-h-screen bg-surface sm:-mt-5">
+      {budget ? (
+        <div className="fixed inset-x-0 top-[var(--app-header-height)] z-30 border-b border-border bg-surface/95 shadow-sm backdrop-blur">
+          <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 py-3 sm:px-4 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-neutral">
+                Campos obligatorios
+              </p>
+              <p className="mt-1 text-sm font-medium text-text-strong">
+                {budget.lines.length
+                  ? `${budget.lines.length} partida${
+                      budget.lines.length === 1 ? "" : "s"
+                    } anadida${budget.lines.length === 1 ? "" : "s"}.`
+                  : "Falta anadir al menos una partida."}
+              </p>
             </div>
 
-            {budget ? (
-              <div className="grid gap-4 border-t border-border pt-6 md:grid-cols-2 xl:grid-cols-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <span className="rounded-md border border-border bg-card-background px-3 py-2 text-sm font-semibold text-text-strong">
+                {formatCurrency(budget.total)}
+              </span>
+
+              <button
+                className="inline-flex h-10 shrink-0 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white transition hover:bg-primary-strong"
+                disabled={isSaving}
+                onClick={() => setWizardOpen(true)}
+                type="button"
+              >
+                Seleccionar partidas
+              </button>
+
+              <button
+                onClick={handleSaveDraft}
+                className={[
+                  "inline-flex h-10 shrink-0 items-center justify-center rounded-md px-4 text-sm font-medium transition",
+                  canSave
+                    ? "bg-primary text-white hover:bg-primary-strong"
+                    : "cursor-not-allowed border border-border bg-card-background text-text-neutral opacity-60",
+                ].join(" ")}
+                disabled={!canSave}
+                type="button"
+              >
+                {isSaving ? "Guardando..." : "Guardar borrador"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <div
+        className={[
+          "mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 sm:px-4 lg:px-8",
+          budget ? "pb-3 pt-[104px] sm:pb-6 sm:pt-[82px]" : "pb-3 pt-0 sm:pb-6 sm:pt-0",
+        ].join(" ")}
+      >
+        {budget ? (
+          <section className="rounded-lg border border-border bg-card-background shadow-sm">
+            <div className="space-y-4 p-4">
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium uppercase tracking-[0.18em] text-text-neutral">
+                      Nuevo presupuesto
+                    </p>
+
+                    <h1 className="text-2xl font-semibold tracking-tight text-text-strong sm:text-3xl">
+                      {getStepTitle(currentStep)}
+                    </h1>
+
+                    <p className="max-w-2xl text-sm text-text-neutral">
+                      {getStepDescription(currentStep, budget)}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {(["Base", "Partidas", "Revision"] as const).map(
+                      (label, index) => {
+                        const step = (index + 1) as WizardStep;
+                        const active = currentStep === step;
+
+                        return (
+                          <span
+                            className={[
+                              "inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium leading-4",
+                              active
+                                ? "border-primary bg-primary text-white"
+                                : "border-border bg-surface text-text-neutral",
+                            ].join(" ")}
+                            key={label}
+                          >
+                            {index + 1}. {label}
+                          </span>
+                        );
+                      }
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-3 xl:w-[560px]">
+                  <div className="rounded-md border border-border bg-surface p-4">
+                    <p className="text-xs uppercase tracking-wide text-text-neutral">
+                      Paso actual
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-text-strong">
+                      {currentStep} de 3
+                    </p>
+                  </div>
+
+                  <div className="rounded-md border border-border bg-surface p-4">
+                    <p className="text-xs uppercase tracking-wide text-text-neutral">
+                      Partidas
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-text-strong">
+                      {budget.lines.length}
+                    </p>
+                  </div>
+
+                  <div className="rounded-md border border-border bg-surface p-4 sm:col-span-3 xl:col-span-1 xl:text-right">
+                    <p className="text-xs uppercase tracking-wide text-text-neutral">
+                      Total actual
+                    </p>
+                    <p className="mt-1 text-2xl font-semibold tracking-tight text-text-strong">
+                      {formatCurrency(budget.total)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-4 border-t border-border pt-6 md:grid-cols-2 xl:grid-cols-5">
                 <div className="rounded-md border border-border bg-surface p-4">
                   <p className="text-xs uppercase tracking-wide text-text-neutral">
-                    Código
+                    Codigo
                   </p>
                   <p className="mt-1 text-sm font-semibold text-text-strong">
                     {budget.code}
@@ -299,10 +331,10 @@ export default function NewBudgetPage() {
                     Dimensiones
                   </p>
                   <p className="mt-1 text-sm font-semibold text-text-strong">
-                    {budget.dimensions.width} m × {budget.dimensions.length} m
+                    {budget.dimensions.width} m x {budget.dimensions.length} m
                   </p>
                   <p className="mt-1 text-xs text-text-neutral">
-                    {budget.dimensions.surfaceM2} m² ·{" "}
+                    {budget.dimensions.surfaceM2} m2 /{" "}
                     {budget.dimensions.perimeterML} ml
                   </p>
                 </div>
@@ -315,240 +347,160 @@ export default function NewBudgetPage() {
                     {getComplexityLabel(budget.complexity)}
                   </p>
                 </div>
+
+                <div className="rounded-md border border-border bg-surface p-4">
+                  <p className="text-xs uppercase tracking-wide text-text-neutral">
+                    Descuento
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-text-strong">
+                    {budget.discountPercent}%
+                  </p>
+                </div>
+
+                <div className="rounded-md border border-border bg-surface p-4 md:col-span-2 xl:col-span-5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-neutral">
+                    NOTAS
+                  </p>
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-text-strong">
+                    {budget.notes || "Sin notas para este presupuesto."}
+                  </p>
+                </div>
               </div>
-            ) : (
-              <div className="rounded-md border border-dashed border-primary-soft bg-surface p-5 text-sm text-text-neutral">
-                Empieza definiendo los datos base del presupuesto. En cuanto los
-                completes, se abrirá el flujo guiado de partidas.
-              </div>
-            )}
-          </div>
-        </section>
+            </div>
+          </section>
         ) : null}
 
-        {saveMessage && (
+        {saveMessage ? (
           <div className="rounded-lg border border-border bg-card-background p-4 text-sm text-text-neutral shadow-sm">
             {saveMessage}
           </div>
-        )}
+        ) : null}
 
-        <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="min-w-0 space-y-4">
-            {!budget ? (
-              <BudgetBaseModal
-                open={!budget}
-                clients={clients}
-                clientError={clientError}
-                isCreatingClient={isCreatingClient}
-                onCreateClient={handleCreateClient}
-                onSubmit={(data) => {
-                  setBudget(
-                    createEmptyBudget({
-                      code: data.code,
-                      project: data.project,
-                      clientId: data.clientId,
-                      date: data.date,
-                      width: data.width,
-                      length: data.length,
-                      complexity: data.complexity,
-                    })
-                  );
-                  setWizardOpen(true);
+        <section className="space-y-4">
+          {!budget ? (
+            <BudgetBaseModal
+              clientError={clientError}
+              clients={clients}
+              discountPolicy={discountPolicy}
+              isCreatingClient={isCreatingClient}
+              key={discountPolicy.role}
+              onCreateClient={handleCreateClient}
+              onSubmit={(data) => {
+                setBudget(
+                  createEmptyBudget({
+                    code: data.code,
+                    project: data.project,
+                    clientId: data.clientId,
+                    date: data.date,
+                    width: data.width,
+                    length: data.length,
+                    complexity: data.complexity,
+                    notes: data.notes,
+                    discountPercent: data.discountPercent,
+                  })
+                );
+                setWizardOpen(true);
+                setSaveMessage(null);
+              }}
+              open={!budget}
+            />
+          ) : (
+            <>
+              <section className="rounded-lg border border-border bg-card-background shadow-sm">
+                <div className="border-b border-border px-4 py-3">
+                  <h2 className="text-lg font-semibold text-text-strong">
+                    Paso 2 - Seleccion de partidas
+                  </h2>
+                  <p className="text-sm text-text-neutral">
+                    Anade partidas familia por familia desde el selector guiado.
+                  </p>
+                </div>
+
+                <div className="p-4">
+                  <div
+                    className={[
+                      "rounded-md border px-4 py-3 text-sm",
+                      wizardOpen
+                        ? "border-border bg-surface text-text-neutral"
+                        : "border-primary-soft bg-primary-soft/20 text-primary-strong",
+                    ].join(" ")}
+                  >
+                    {wizardOpen
+                      ? "El asistente de partidas esta abierto. Avanza por las familias y anade las lineas que necesites."
+                      : "El asistente de partidas esta oculto. Puedes revisar las lineas actuales o volver a abrirlo para seguir anadiendo partidas."}
+                  </div>
+                </div>
+              </section>
+
+              <BudgetWizardFromCatalog
+                existingLines={budget.lines}
+                onAdd={(line) => {
+                  setBudget((current) => {
+                    if (!current) return current;
+
+                    if (
+                      current.lines.some(
+                        (existingLine) =>
+                          existingLine.catalogItemId === line.catalogItemId
+                      )
+                    ) {
+                      return current;
+                    }
+
+                    return addLine(current, line);
+                  });
                   setSaveMessage(null);
                 }}
+                onClose={() => setWizardOpen(false)}
+                onUpdateExistingLineQuantity={(lineId, quantity) => {
+                  setBudget((current) =>
+                    current
+                      ? updateLineQuantity(current, lineId, quantity)
+                      : current
+                  );
+                  setSaveMessage(null);
+                }}
+                open={wizardOpen}
               />
-            ) : (
-              <>
-                <section className="rounded-lg border border-border bg-card-background shadow-sm">
-                  <div className="flex flex-col gap-3 border-b border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <h2 className="text-lg font-semibold text-text-strong">
-                        Paso 2 · Selección de partidas
-                      </h2>
-                      <p className="text-sm text-text-neutral">
-                        Añade partidas familia por familia desde el selector guiado.
-                      </p>
-                    </div>
 
-                    <button
-                      onClick={() => setWizardOpen((open) => !open)}
-                      className="inline-flex items-center justify-center rounded-md border border-border bg-card-background px-4 py-2.5 text-sm font-medium text-text-strong transition hover:bg-surface"
-                      type="button"
-                    >
-                      {wizardOpen ? "Ocultar selector" : "Mostrar selector"}
-                    </button>
-                  </div>
-
-                  <div className="p-4">
-                    <div
-                      className={`rounded-md border px-4 py-3 text-sm ${
-                        wizardOpen
-                          ? "border-border bg-surface text-text-neutral"
-                          : "border-primary-soft bg-primary-soft/20 text-primary-strong"
-                      }`}
-                    >
-                      {wizardOpen
-                        ? "El asistente de partidas está abierto. Avanza por las familias y añade las líneas que necesites."
-                        : "El asistente de partidas está oculto. Puedes revisar las líneas actuales o volver a abrirlo para seguir añadiendo partidas."}
-                    </div>
-                  </div>
-                </section>
-
-                <BudgetWizardFromCatalog
-                  open={wizardOpen}
-                  existingLines={budget.lines}
-                  onUpdateExistingLineQuantity={(lineId, quantity) => {
-                    setBudget((current) =>
-                      current
-                        ? updateLineQuantity(current, lineId, quantity)
-                        : current
-                    );
-                    setSaveMessage(null);
-                  }}
-                  onClose={() => setWizardOpen(false)}
-                  onAdd={(line) => {
-                    setBudget((current) => {
-                      if (!current) return current;
-
-                      if (
-                        current.lines.some(
-                          (existingLine) =>
-                            existingLine.catalogItemId === line.catalogItemId
-                        )
-                      ) {
-                        return current;
-                      }
-
-                      return addLine(current, line);
-                    });
-                    setSaveMessage(null);
-                  }}
-                />
-
-                <section className="rounded-lg border border-border bg-card-background shadow-sm">
-                  <div className="flex flex-col gap-3 border-b border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <h2 className="text-lg font-semibold text-text-strong">
-                        Paso 3 · Revisión final
-                      </h2>
-                      <p className="text-sm text-text-neutral">
-                        Revisa las partidas añadidas antes de guardar el borrador.
-                      </p>
-                    </div>
-
-                    <div className="rounded-md border border-border bg-surface px-4 py-2 text-sm text-text-neutral">
-                      {budget.lines.length}{" "}
-                      {budget.lines.length === 1 ? "partida" : "partidas"}
-                    </div>
-                  </div>
-
-                  <div className="p-4">
-                    {budget.lines.length ? (
-                      <BudgetLinesPanel
-                        lines={budget.lines}
-                        onRemove={(id) =>
-                          setBudget((current) =>
-                            current ? removeLine(current, id) : current
-                          )
-                        }
-                      />
-                    ) : (
-                      <div className="rounded-md border border-dashed border-primary-soft bg-surface p-4 text-sm text-text-neutral">
-                        No hay partidas añadidas todavía. Abre el selector guiado
-                        para empezar a construir el presupuesto.
-                      </div>
-                    )}
-                  </div>
-                </section>
-              </>
-            )}
-          </div>
-
-          <aside className="space-y-4 xl:sticky xl:top-[calc(var(--app-header-height)+8px)] xl:self-start">
-            <section className="rounded-lg border border-border bg-card-background shadow-sm">
-              <div className="border-b border-border px-4 py-3">
-                <h2 className="text-lg font-semibold text-text-strong">
-                  Resumen
-                </h2>
-              </div>
-
-              <div className="space-y-4 p-4">
-                <div className="rounded-md border border-border bg-surface px-4 py-3">
-                  <p className="text-xs uppercase tracking-wide text-text-neutral">
-                    Estado del flujo
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-text-strong">
-                    {currentStep === 1
-                      ? "Pendiente de datos base"
-                      : currentStep === 2
-                      ? "Construyendo partidas"
-                      : "Listo para revisión y guardado"}
-                  </p>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-                  <div className="rounded-md border border-border bg-surface p-4">
-                    <p className="text-xs uppercase tracking-wide text-text-neutral">
-                      Partidas
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-text-strong">
-                      {budget?.lines.length ?? 0}
+              <section className="rounded-lg border border-border bg-card-background shadow-sm">
+                <div className="flex flex-col gap-3 border-b border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold text-text-strong">
+                      Paso 3 - Revision final
+                    </h2>
+                    <p className="text-sm text-text-neutral">
+                      Revisa las partidas anadidas antes de guardar el borrador.
                     </p>
                   </div>
 
-                  <div className="rounded-md border border-border bg-surface p-4">
-                    <p className="text-xs uppercase tracking-wide text-text-neutral">
-                      Complejidad
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-text-strong">
-                      {budget ? getComplexityLabel(budget.complexity) : "-"}
-                    </p>
+                  <div className="rounded-md border border-border bg-surface px-4 py-2 text-sm text-text-neutral">
+                    {budget.lines.length}{" "}
+                    {budget.lines.length === 1 ? "partida" : "partidas"}
                   </div>
                 </div>
 
-                {budget ? (
-                  <BudgetTotals subtotal={budget.subtotal} total={budget.total} />
-                ) : (
-                  <div className="rounded-md border border-dashed border-primary-soft bg-surface p-5 text-sm text-text-neutral">
-                    El resumen económico aparecerá cuando completes los datos base
-                    del presupuesto.
-                  </div>
-                )}
-              </div>
-            </section>
-
-            <section className="rounded-lg border border-border bg-card-background shadow-sm">
-              <div className="border-b border-border px-4 py-3">
-                <h2 className="text-lg font-semibold text-text-strong">
-                  Acciones
-                </h2>
-              </div>
-
-              <div className="space-y-3 p-4">
-                <button
-                  onClick={() => setWizardOpen(true)}
-                  type="button"
-                  disabled={!budget}
-                  className="w-full rounded-md border border-border bg-card-background px-4 py-2.5 text-sm font-medium text-text-strong transition hover:bg-surface disabled:cursor-not-allowed disabled:border-border disabled:bg-surface disabled:text-text-neutral/55"
-                >
-                  Abrir selector guiado
-                </button>
-
-                <button
-                  onClick={handleSaveDraft}
-                  className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:bg-primary-soft"
-                  type="button"
-                  disabled={!canSave}
-                >
-                  {isSaving ? "Guardando..." : "Guardar borrador"}
-                </button>
-
-                <p className="text-xs leading-5 text-text-neutral">
-                  Solo podrás guardar cuando exista al menos una partida añadida.
-                </p>
-              </div>
-            </section>
-          </aside>
+                <div className="p-4">
+                  {budget.lines.length ? (
+                    <BudgetLinesPanel
+                      lines={budget.lines}
+                      onRemove={(id) => {
+                        setBudget((current) =>
+                          current ? removeLine(current, id) : current
+                        );
+                        setSaveMessage(null);
+                      }}
+                    />
+                  ) : (
+                    <div className="rounded-md border border-dashed border-primary-soft bg-surface p-4 text-sm text-text-neutral">
+                      No hay partidas anadidas todavia. Abre el selector guiado
+                      para empezar a construir el presupuesto.
+                    </div>
+                  )}
+                </div>
+              </section>
+            </>
+          )}
         </section>
       </div>
     </main>

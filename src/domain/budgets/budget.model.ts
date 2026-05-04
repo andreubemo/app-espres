@@ -40,11 +40,15 @@ export interface Budget {
   clientId: string;
   date: string;
   complexity: BudgetComplexity;
+  notes: string;
+  discountPercent: number;
   dimensions: BudgetDimensions;
 
   // 🔥 líneas ya preparadas para persistencia real
   lines: BudgetLine[];
 
   subtotal: number;
+  totalBeforeDiscount: number;
+  discountAmount: number;
   total: number;
 }
