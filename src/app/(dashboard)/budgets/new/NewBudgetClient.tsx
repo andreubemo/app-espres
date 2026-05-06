@@ -162,27 +162,33 @@ export default function NewBudgetClient({
     <main className="-mt-4 min-h-screen bg-surface sm:-mt-5">
       {budget ? (
         <div className="fixed inset-x-0 top-[var(--app-header-height)] z-30 border-b border-border bg-surface/95 shadow-sm backdrop-blur">
-          <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 py-3 sm:px-4 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-            <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-neutral">
-                Campos obligatorios
-              </p>
-              <p className="mt-1 text-sm font-medium text-text-strong">
-                {budget.lines.length
-                  ? `${budget.lines.length} partida${
-                      budget.lines.length === 1 ? "" : "s"
-                    } anadida${budget.lines.length === 1 ? "" : "s"}.`
-                  : "Falta anadir al menos una partida."}
-              </p>
+          <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-2 sm:px-4 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+            <div className="flex min-w-0 items-start justify-between gap-3 lg:block">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-neutral">
+                  Campos obligatorios
+                </p>
+                <p className="mt-1 text-sm font-medium text-text-strong">
+                  {budget.lines.length
+                    ? `${budget.lines.length} partida${
+                        budget.lines.length === 1 ? "" : "s"
+                      } anadida${budget.lines.length === 1 ? "" : "s"}.`
+                    : "Falta anadir al menos una partida."}
+                </p>
+              </div>
+
+              <span className="inline-flex h-10 shrink-0 items-center rounded-md border border-border bg-card-background px-3 text-sm font-semibold text-text-strong lg:hidden">
+                {formatCurrency(budget.total)}
+              </span>
             </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <span className="rounded-md border border-border bg-card-background px-3 py-2 text-sm font-semibold text-text-strong">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
+              <span className="hidden h-10 shrink-0 items-center rounded-md border border-border bg-card-background px-3 text-sm font-semibold text-text-strong lg:inline-flex">
                 {formatCurrency(budget.total)}
               </span>
 
               <button
-                className="inline-flex h-10 shrink-0 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-white transition hover:bg-primary-strong"
+                className="inline-flex h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-md bg-primary px-3 text-[13px] font-medium text-white transition hover:bg-primary-strong sm:px-4 sm:text-sm"
                 disabled={isSaving}
                 onClick={() => setWizardOpen(true)}
                 type="button"
@@ -193,7 +199,7 @@ export default function NewBudgetClient({
               <button
                 onClick={handleSaveDraft}
                 className={[
-                  "inline-flex h-10 shrink-0 items-center justify-center rounded-md px-4 text-sm font-medium transition",
+                  "inline-flex h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-md px-3 text-[13px] font-medium transition sm:px-4 sm:text-sm",
                   canSave
                     ? "bg-primary text-white hover:bg-primary-strong"
                     : "cursor-not-allowed border border-border bg-card-background text-text-neutral opacity-60",
@@ -212,7 +218,7 @@ export default function NewBudgetClient({
         className={[
           "mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 sm:px-4 lg:px-8",
           budget
-            ? "pb-3 pt-[104px] sm:pb-6 sm:pt-[82px]"
+            ? "pb-3 pt-[112px] sm:pb-6 lg:pt-[76px]"
             : "pb-3 pt-0 sm:pb-6 sm:pt-0",
         ].join(" ")}
       >

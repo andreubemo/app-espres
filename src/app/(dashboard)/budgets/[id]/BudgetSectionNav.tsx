@@ -46,7 +46,7 @@ export default function BudgetSectionNav() {
   }, []);
 
   return (
-    <div className="sticky z-20 rounded-lg border border-border bg-card-background/95 p-2 shadow-sm backdrop-blur xl:top-[calc(var(--app-header-height)+8px)]">
+    <div className="sticky top-[calc(var(--app-header-height)+8px)] z-20 rounded-lg border border-border bg-card-background/95 p-2 shadow-sm backdrop-blur">
       <div className="flex gap-2 overflow-x-auto scroll-smooth">
         {sections.map((section) => {
           const isActive = activeSection === section.id;

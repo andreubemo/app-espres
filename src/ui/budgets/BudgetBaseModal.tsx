@@ -299,11 +299,17 @@ export default function BudgetBaseModal({
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div
+              className={
+                isNewBudgetFlow
+                  ? "grid grid-cols-2 gap-2 sm:flex sm:items-center"
+                  : "flex flex-col gap-2 sm:flex-row sm:items-center"
+              }
+            >
               {isNewBudgetFlow ? (
                 <button
                   className={[
-                    "inline-flex h-10 shrink-0 items-center justify-center rounded-md px-4 text-sm font-medium transition",
+                    "inline-flex h-10 w-full shrink-0 items-center justify-center rounded-md px-3 text-[13px] font-medium transition sm:w-auto sm:px-4 sm:text-sm",
                     isValid
                       ? "bg-primary text-white hover:bg-primary-strong"
                       : "cursor-not-allowed border border-border bg-card-background text-text-neutral opacity-60",
@@ -318,7 +324,7 @@ export default function BudgetBaseModal({
 
               <button
                 className={[
-                  "inline-flex h-10 shrink-0 items-center justify-center rounded-md px-4 text-sm font-medium transition",
+                  "inline-flex h-10 shrink-0 items-center justify-center rounded-md px-3 text-[13px] font-medium transition sm:px-4 sm:text-sm",
                   isNewBudgetFlow
                     ? "cursor-not-allowed border border-border bg-card-background text-text-neutral opacity-60"
                     : isValid
