@@ -4,6 +4,7 @@ type BudgetVersionContextCardProps = {
   lineCount: number;
   totalVersions: number;
   isHistoricalView: boolean;
+  versionGeneratedAtLabel: string;
 };
 
 export default function BudgetVersionContextCard({
@@ -12,6 +13,7 @@ export default function BudgetVersionContextCard({
   lineCount,
   totalVersions,
   isHistoricalView,
+  versionGeneratedAtLabel,
 }: BudgetVersionContextCardProps) {
   return (
     <div className="rounded-lg border border-border bg-card-background shadow-sm">
@@ -52,6 +54,13 @@ export default function BudgetVersionContextCard({
             <span className="text-text-neutral">Versión actual</span>
             <span className="font-medium text-text-strong">
               v{currentVersionNumber}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-text-neutral">Versión generada</span>
+            <span className="font-medium text-text-strong">
+              {versionGeneratedAtLabel}
             </span>
           </div>
 

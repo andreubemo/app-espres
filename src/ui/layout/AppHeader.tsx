@@ -90,7 +90,7 @@ export default function AppHeader({
       <div className="mx-auto flex h-[61px] w-full max-w-7xl items-center gap-3 px-4 sm:px-5 lg:px-8">
         <Link
           href="/budgets"
-          className="inline-flex min-w-0 shrink-0 flex-col items-center justify-center gap-0.5"
+          className="inline-flex min-w-0 shrink-0 flex-col items-start justify-center gap-0.5 text-left"
         >
           <EspresWordmark />
 

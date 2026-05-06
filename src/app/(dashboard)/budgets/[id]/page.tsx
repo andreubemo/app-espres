@@ -41,6 +41,23 @@ function formatDate(value?: string) {
   }).format(parsed);
 }
 
+function formatDateTime(value?: Date | string | null) {
+  if (!value) return "-";
+
+  const parsed = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return typeof value === "string" ? value : "-";
+  }
+
+  return new Intl.DateTimeFormat("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(parsed);
+}
+
 function getComplexityLabel(complexity?: string) {
   switch (complexity?.toLowerCase()) {
     case "low":
@@ -138,6 +155,7 @@ export default async function BudgetDetailPage({
       reference: true,
       project: true,
       status: true,
+      createdAt: true,
       client: {
         select: {
           name: true,
@@ -213,6 +231,8 @@ export default async function BudgetDetailPage({
   const currentVersionNumber = latestVersion?.version ?? 1;
   const viewedVersionNumber = effectiveVersion.version;
   const dateLabel = formatDate(data.date);
+  const generatedAtLabel = formatDateTime(budget.createdAt);
+  const versionGeneratedAtLabel = formatDateTime(effectiveVersion.createdAt);
   const complexityLabel = getComplexityLabel(data.complexity);
   const totalLabel = formatCurrency(total);
 
@@ -319,6 +339,7 @@ export default async function BudgetDetailPage({
           viewedVersionNumber={viewedVersionNumber}
           isHistoricalView={isHistoricalView}
           dateLabel={dateLabel}
+          generatedAtLabel={generatedAtLabel}
           complexityLabel={complexityLabel}
           totalLabel={totalLabel}
         />
@@ -334,6 +355,7 @@ export default async function BudgetDetailPage({
                 clientName={clientName}
                 responsibleName={responsibleName}
                 statusLabel={budget.status}
+                generatedAtLabel={generatedAtLabel}
               />
             </section>
 
@@ -377,6 +399,7 @@ export default async function BudgetDetailPage({
               lineCount={lines.length}
               totalVersions={budget.versions.length}
               isHistoricalView={isHistoricalView}
+              versionGeneratedAtLabel={versionGeneratedAtLabel}
             />
           </aside>
         </section>

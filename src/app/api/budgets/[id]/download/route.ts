@@ -116,6 +116,23 @@ function formatDate(value?: string) {
   }).format(parsed);
 }
 
+function formatDateTime(value?: Date | string | null) {
+  if (!value) return "-";
+
+  const parsed = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return typeof value === "string" ? value : "-";
+  }
+
+  return new Intl.DateTimeFormat("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(parsed);
+}
+
 function formatComplexity(value?: string) {
   switch (value?.toLowerCase()) {
     case "low":
@@ -254,9 +271,14 @@ async function createPdfBuffer(
     reference: string;
     project: string;
     status: string;
+    createdAt: Date | string;
     client: { name: string };
     createdBy: { email: string };
-    versions: Array<{ version: number; data: unknown }>;
+    versions: Array<{
+      version: number;
+      createdAt: Date | string;
+      data: unknown;
+    }>;
   },
   data: StoredBudgetData,
   subtotal: number,
@@ -286,7 +308,8 @@ async function createPdfBuffer(
   const project = data.project?.trim() || budget.project;
   const lines = Array.isArray(data.lines) ? data.lines : [];
   const dimensions = data.dimensions ?? {};
-  const latestVersion = budget.versions[0]?.version ?? 1;
+  const latestVersion = budget.versions[0];
+  const latestVersionNumber = latestVersion?.version ?? 1;
 
   doc
     .rect(0, 0, PAGE.width, 112)
@@ -340,7 +363,7 @@ async function createPdfBuffer(
   drawMetric(
     doc,
     "Version",
-    `v${latestVersion}`,
+    `v${latestVersionNumber}`,
     PAGE.margin + (metricW + gap) * 3,
     metricsY,
     metricW
@@ -352,7 +375,7 @@ async function createPdfBuffer(
   const summaryGap = 18;
   const summaryW = (PAGE.width - PAGE.margin * 2 - summaryGap) / 2;
 
-  drawCard(doc, PAGE.margin, summaryY, summaryW, 96);
+  drawCard(doc, PAGE.margin, summaryY, summaryW, 116);
   doc
     .fillColor(COLORS.muted)
     .font("Helvetica-Bold")
@@ -364,10 +387,11 @@ async function createPdfBuffer(
     .fontSize(10)
     .text(`Superficie: ${formatNumber(dimensions.surfaceM2)} m2`, PAGE.margin + 14, summaryY + 36)
     .text(`Perimetro: ${formatNumber(dimensions.perimeterML)} ml`, PAGE.margin + 14, summaryY + 56)
-    .text(`Complejidad: ${formatComplexity(data.complexity)}`, PAGE.margin + 14, summaryY + 76);
+    .text(`Complejidad: ${formatComplexity(data.complexity)}`, PAGE.margin + 14, summaryY + 76)
+    .text(`Generado: ${formatDateTime(budget.createdAt)}`, PAGE.margin + 14, summaryY + 96);
 
   const summary2X = PAGE.margin + summaryW + summaryGap;
-  drawCard(doc, summary2X, summaryY, summaryW, 96);
+  drawCard(doc, summary2X, summaryY, summaryW, 116);
   doc
     .fillColor(COLORS.muted)
     .font("Helvetica-Bold")
@@ -424,7 +448,7 @@ async function createPdfBuffer(
       align: "right",
     });
 
-  doc.y = summaryY + 122;
+  doc.y = summaryY + 142;
 
   drawNotesCard(doc, data.notes);
 
@@ -550,6 +574,7 @@ export async function GET(_request: Request, context: RouteContext) {
       reference: true,
       project: true,
       status: true,
+      createdAt: true,
       client: {
         select: {
           name: true,
@@ -565,6 +590,7 @@ export async function GET(_request: Request, context: RouteContext) {
         take: 1,
         select: {
           version: true,
+          createdAt: true,
           data: true,
         },
       },
