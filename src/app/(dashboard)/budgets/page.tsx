@@ -81,6 +81,24 @@ function formatDate(value?: string) {
   }).format(date);
 }
 
+function formatDateTime(value?: Date | string | null) {
+  if (!value) return "-";
+
+  const date = value instanceof Date ? value : new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return typeof value === "string" ? value : "-";
+  }
+
+  return new Intl.DateTimeFormat("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
 function formatNumber(value?: number, decimals = 2) {
   return new Intl.NumberFormat("es-ES", {
     minimumFractionDigits: 0,
@@ -170,6 +188,7 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
       id: true,
       reference: true,
       status: true,
+      createdAt: true,
       client: {
         select: {
           name: true,
@@ -242,7 +261,7 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
         `}</style>
       ) : null}
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 pb-6 pt-0 lg:px-8">
-        <header className="space-y-1">
+        <header className="space-y-1 pt-1">
           <h1 className="text-2xl font-semibold tracking-tight text-text-strong">
             Presupuestos
           </h1>
@@ -369,6 +388,11 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
                       <CompactMetric
                         label="Fecha"
                         value={formatDate(data.date)}
+                      />
+
+                      <CompactMetric
+                        label="Generado"
+                        value={formatDateTime(budget.createdAt)}
                       />
 
                       <CompactMetric

@@ -5,6 +5,7 @@ import {
   canManageUsers,
   getInternalUserContext,
 } from "@/lib/access-control";
+import AppFooter from "@/ui/layout/AppFooter";
 import AppHeader from "@/ui/layout/AppHeader";
 
 type DashboardLayoutProps = {
@@ -25,7 +26,7 @@ export default async function DashboardLayout({
 
   return (
     <div
-      className="min-h-screen bg-surface"
+      className="flex min-h-screen flex-col bg-surface"
       style={{ "--app-header-height": "61px" } as CSSProperties}
     >
       <AppHeader
@@ -34,7 +35,9 @@ export default async function DashboardLayout({
         userEmail={userEmail}
       />
 
-      <main className="pt-4 sm:pt-5">{children}</main>
+      <main className="flex-1 pt-4 sm:pt-5">{children}</main>
+
+      <AppFooter />
     </div>
   );
 }

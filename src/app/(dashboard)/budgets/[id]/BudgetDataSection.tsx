@@ -4,6 +4,7 @@ type BudgetDataSectionProps = {
   clientName: string;
   responsibleName: string;
   statusLabel: string;
+  generatedAtLabel: string;
 };
 
 function getStatusBadgeClasses(statusLabel: string) {
@@ -27,6 +28,7 @@ export default function BudgetDataSection({
   clientName,
   responsibleName,
   statusLabel,
+  generatedAtLabel,
 }: BudgetDataSectionProps) {
   const statusBadgeClasses = getStatusBadgeClasses(statusLabel);
 
@@ -38,7 +40,7 @@ export default function BudgetDataSection({
         </h2>
       </div>
 
-      <div className="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-6">
         <div className="rounded-md border border-border bg-surface p-4">
           <p className="text-xs uppercase tracking-wide text-text-neutral">
             Código
@@ -72,6 +74,15 @@ export default function BudgetDataSection({
           </p>
           <p className="mt-1 truncate text-sm font-semibold text-text-strong">
             {responsibleName}
+          </p>
+        </div>
+
+        <div className="rounded-md border border-border bg-surface p-4">
+          <p className="text-xs uppercase tracking-wide text-text-neutral">
+            Generado
+          </p>
+          <p className="mt-1 text-sm font-semibold text-text-strong">
+            {generatedAtLabel}
           </p>
         </div>
 

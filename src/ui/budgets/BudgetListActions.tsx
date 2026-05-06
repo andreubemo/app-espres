@@ -105,9 +105,9 @@ export default function BudgetListActions({
   const [feedback, setFeedback] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const [isDeleting, startDeleteTransition] = useTransition();
   const menuRef = useRef<HTMLDivElement | null>(null);
-  const detailHref = `/budgets/${budgetId}`;
   const editHref = `/budgets/${budgetId}/edit`;
 
   useEffect(() => {
@@ -140,24 +140,68 @@ export default function BudgetListActions({
     };
   }, []);
 
+  async function fetchBudgetPdf() {
+    const response = await fetch(`/api/budgets/${budgetId}/download`);
+
+    if (!response.ok) {
+      throw new Error("No se pudo preparar el PDF del presupuesto");
+    }
+
+    const blob = await response.blob();
+    const contentDisposition = response.headers.get("Content-Disposition");
+    const fileName =
+      contentDisposition?.match(/filename="(.+)"/)?.[1] ??
+      `${reference || "presupuesto"}.pdf`;
+    const pdfBlob =
+      blob.type === "application/pdf"
+        ? blob
+        : new Blob([blob], { type: "application/pdf" });
+
+    return { blob: pdfBlob, fileName };
+  }
+
+  function downloadBlob(blob: Blob, fileName: string) {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  }
+
+  async function downloadBudgetPdf() {
+    const { blob, fileName } = await fetchBudgetPdf();
+    downloadBlob(blob, fileName);
+  }
+
   async function handleShare() {
-    const url = `${window.location.origin}${detailHref}`;
-    const shareData = {
-      title: `Presupuesto ${reference}`,
-      text: `Presupuesto ${reference}`,
-      url,
-    };
+    setIsSharing(true);
 
     try {
-      if (navigator.share && navigator.canShare?.(shareData)) {
+      const { blob, fileName } = await fetchBudgetPdf();
+      const file = new File([blob], fileName, { type: "application/pdf" });
+      const shareData: ShareData = {
+        files: [file],
+        title: `Presupuesto ${reference}`,
+        text: `Presupuesto ${reference}`,
+      };
+
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share(shareData);
-        setFeedback("Presupuesto compartido");
+        setFeedback("PDF compartido");
       } else {
-        await navigator.clipboard.writeText(url);
-        setFeedback("Link copiado");
+        downloadBlob(blob, fileName);
+        setFeedback("Tu navegador no comparte archivos. PDF descargado");
       }
-    } catch {
-      setFeedback("No se pudo compartir");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "No se pudo compartir el PDF";
+      setFeedback(message);
+    } finally {
+      setIsSharing(false);
     }
 
     setMenuOpen(false);
@@ -167,27 +211,7 @@ export default function BudgetListActions({
     setIsDownloading(true);
 
     try {
-      const response = await fetch(`/api/budgets/${budgetId}/download`);
-
-      if (!response.ok) {
-        throw new Error("No se pudo descargar el presupuesto");
-      }
-
-      const blob = await response.blob();
-      const contentDisposition = response.headers.get("Content-Disposition");
-      const fileName =
-        contentDisposition?.match(/filename="(.+)"/)?.[1] ??
-        `${reference || "presupuesto"}.pdf`;
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-
+      await downloadBudgetPdf();
       setFeedback("Descarga iniciada");
       setMenuOpen(false);
     } catch (error) {
@@ -252,17 +276,18 @@ export default function BudgetListActions({
               type="button"
               role="menuitem"
               onClick={handleShare}
+              disabled={isSharing || isDownloading}
               className="flex min-h-11 w-full items-center gap-2 px-3 text-left text-sm font-medium text-text-strong transition hover:bg-surface"
             >
               <ActionIcon type="share" />
-              Compartir
+              {isSharing ? "Preparando PDF..." : "Compartir PDF"}
             </button>
 
             <button
               type="button"
               role="menuitem"
               onClick={handleDownload}
-              disabled={isDownloading}
+              disabled={isDownloading || isSharing}
               className="flex min-h-11 w-full items-center gap-2 px-3 text-left text-sm font-medium text-text-strong transition hover:bg-surface"
             >
               <ActionIcon type="download" />

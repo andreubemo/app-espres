@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
 import "./globals.css"
-import Providers from "@/providers"
 
 export const metadata: Metadata = {
   title: "ESpres App | Presupuestos",
@@ -15,7 +14,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <Providers>{children}</Providers>
+        {children}
       </body>
     </html>
   )

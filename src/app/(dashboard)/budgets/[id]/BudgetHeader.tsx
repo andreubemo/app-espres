@@ -12,6 +12,7 @@ type BudgetHeaderProps = {
   viewedVersionNumber: number;
   isHistoricalView: boolean;
   dateLabel: string;
+  generatedAtLabel: string;
   complexityLabel: string;
   totalLabel: string;
 };
@@ -26,6 +27,7 @@ export default function BudgetHeader({
   viewedVersionNumber,
   isHistoricalView,
   dateLabel,
+  generatedAtLabel,
   complexityLabel,
   totalLabel,
 }: BudgetHeaderProps) {
@@ -75,8 +77,10 @@ export default function BudgetHeader({
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:w-[560px] xl:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 xl:w-[720px] xl:grid-cols-4">
             <StatCard label="Fecha" value={dateLabel} />
+
+            <StatCard label="Generado" value={generatedAtLabel} />
 
             <StatCard label="Complejidad" value={complexityLabel} />
 
