@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import { Role } from "@/generated/prisma";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -41,7 +43,7 @@ export function canManageTargetUser(
   return actorRole === Role.ADMIN && targetRole === Role.WORKER;
 }
 
-export async function getInternalUserContext() {
+export const getInternalUserContext = cache(async () => {
   const session = await auth();
 
   if (
@@ -68,7 +70,7 @@ export async function getInternalUserContext() {
   });
 
   return user;
-}
+});
 
 export async function requireInternalUser() {
   const user = await getInternalUserContext();

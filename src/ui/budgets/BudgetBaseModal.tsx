@@ -270,15 +270,10 @@ export default function BudgetBaseModal({
       >
         <div className="relative left-1/2 w-screen -translate-x-1/2 border-y border-border bg-card-background/95 shadow-sm backdrop-blur">
           <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-2 sm:px-4 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-            <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:gap-8 lg:gap-10">
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-neutral">
                   Campos obligatorios
-                </p>
-                <p className="mt-1 text-sm font-medium text-text-strong">
-                  {isValid
-                    ? "Datos base completos."
-                    : `Faltan ${missingFields.length} de ${requiredFields.length} campos.`}
                 </p>
               </div>
 
@@ -340,6 +335,18 @@ export default function BudgetBaseModal({
           </div>
         </div>
       </div>
+
+      {isNewBudgetFlow ? (
+        <header className="space-y-1 pt-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-text-strong">
+            Nuevo presupuesto
+          </h1>
+          <p className="max-w-2xl text-sm leading-5 text-text-neutral">
+            Define los datos base, selecciona partidas y guarda el presupuesto
+            como borrador.
+          </p>
+        </header>
+      ) : null}
 
       <div className="rounded-lg border border-border bg-card-background shadow-sm">
         <div className="space-y-4 p-4 sm:p-4 xl:p-8">
