@@ -1,0 +1,6 @@
+.next
+node_modules
+src/generated/prisma
+*.log
+.codex-*.txt
+.codex-*.env
