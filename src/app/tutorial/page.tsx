@@ -1,34 +1,25 @@
 import SectionCard from "@/ui/common/SectionCard";
 
-const workflowSteps = [
-  {
-    title: "1. Define los datos base",
-    description:
-      "Introduce codigo, proyecto, cliente, fecha, dimensiones, complejidad, descuento permitido y notas. Estos datos seran la referencia principal del presupuesto.",
-  },
-  {
-    title: "2. Selecciona partidas",
-    description:
-      "Abre el selector guiado, avanza por familias y anade solo las partidas necesarias. Puedes ajustar cantidades en el momento para mantener el total actualizado.",
-  },
-  {
-    title: "3. Revisa antes de guardar",
-    description:
-      "Comprueba partidas, dimensiones, descuento, notas y total. Cuando todo este correcto, guarda el borrador para que quede registrado.",
-  },
-  {
-    title: "4. Gestiona el presupuesto",
-    description:
-      "Desde el listado puedes editar, duplicar, descargar PDF, compartir el archivo y eliminar presupuestos cuando sea necesario.",
-  },
+const ownerSteps = [
+  "Entra con tu usuario interno y abre el menu de usuario.",
+  "Usa Gestionar precios para revisar contadores, importar Excel o editar costes.",
+  "Crea presupuestos desde Nuevo presupuesto y guardalos como borrador.",
+  "Desde el detalle puedes duplicar, marcar como enviado, crear versiones y restaurar versiones antiguas.",
 ];
 
-const benefits = [
-  "Reduce errores al centralizar cliente, responsable, partidas, cantidades y notas.",
-  "Acelera la creacion de presupuestos repetitivos con un selector guiado por familias.",
-  "Mantiene trazabilidad con fechas, versiones y responsable del presupuesto.",
-  "Facilita el envio al cliente mediante PDF descargable y compartible.",
-  "Permite controlar descuentos segun el rol de cada usuario.",
+const workerSteps = [
+  "Crea un presupuesto nuevo y completa cliente, proyecto, fecha y dimensiones.",
+  "Selecciona partidas desde el catalogo guiado por familias.",
+  "Revisa total, descuento permitido por tu rol y partidas antes de guardar.",
+  "Si intentas salir con cambios, la app te avisara antes de perder informacion.",
+];
+
+const importantNotes = [
+  "Guardar borrador crea un Budget y una primera BudgetVersion con snapshot JSON.",
+  "Marcar como enviado cambia el estado del presupuesto y marca la version actual.",
+  "Restaurar una version no pisa el historial: crea una nueva version desde el snapshot antiguo.",
+  "Descartar limpia el presupuesto en curso si confirmas la accion.",
+  "Los precios historicos quedan guardados dentro de BudgetVersion.data.",
 ];
 
 export default function TutorialPage() {
@@ -40,81 +31,66 @@ export default function TutorialPage() {
             Tutorial
           </h1>
           <p className="max-w-2xl text-sm leading-5 text-text-neutral">
-            Guia rapida para usar Espres y entender que aporta al trabajo diario
-            de presupuestos.
+            Guia rapida para usar Espres segun el rol del usuario.
           </p>
         </header>
 
         <SectionCard
-          title="Como funciona"
-          description="El flujo esta pensado para crear presupuestos de forma ordenada, revisable y rapida."
+          title="Owner / administrador principal"
+          description="Puede gestionar precios, usuarios y el flujo completo de presupuestos."
         >
-          <div className="grid gap-3 md:grid-cols-2">
-            {workflowSteps.map((step) => (
-              <article
-                key={step.title}
-                className="rounded-md border border-border bg-surface p-4"
+          <ol className="grid gap-2 md:grid-cols-2">
+            {ownerSteps.map((step) => (
+              <li
+                key={step}
+                className="rounded-md border border-border bg-surface px-4 py-3 text-sm leading-6 text-text-neutral"
               >
-                <h2 className="text-base font-semibold text-text-strong">
-                  {step.title}
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-text-neutral">
-                  {step.description}
-                </p>
-              </article>
+                {step}
+              </li>
             ))}
-          </div>
+          </ol>
         </SectionCard>
 
         <SectionCard
-          title="Beneficios principales"
-          description="La app prioriza velocidad, control y consistencia en presupuestos internos."
+          title="Usuario interno / operativo"
+          description="Trabaja principalmente creando, revisando y consultando presupuestos."
         >
-          <ul className="grid gap-2 md:grid-cols-2">
-            {benefits.map((benefit) => (
+          <ol className="grid gap-2 md:grid-cols-2">
+            {workerSteps.map((step) => (
               <li
-                key={benefit}
+                key={step}
                 className="rounded-md border border-border bg-surface px-4 py-3 text-sm leading-6 text-text-neutral"
               >
-                {benefit}
+                {step}
+              </li>
+            ))}
+          </ol>
+        </SectionCard>
+
+        <SectionCard
+          title="Avisos importantes"
+          description="Conceptos que conviene tener claros antes de trabajar con presupuestos reales."
+        >
+          <ul className="grid gap-2 md:grid-cols-2">
+            {importantNotes.map((note) => (
+              <li
+                key={note}
+                className="rounded-md border border-border bg-surface px-4 py-3 text-sm leading-6 text-text-neutral"
+              >
+                {note}
               </li>
             ))}
           </ul>
         </SectionCard>
 
         <SectionCard
-          title="Comprobaciones recomendadas"
-          description="Antes de enviar un presupuesto, revisa estos puntos para evitar correcciones posteriores."
+          title="Cliente externo"
+          description="Pendiente: el portal de cliente externo no esta implementado como flujo completo."
         >
-          <div className="grid gap-3 md:grid-cols-3">
-            <div className="rounded-md border border-border bg-surface p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-text-neutral">
-                Datos
-              </p>
-              <p className="mt-2 text-sm leading-6 text-text-strong">
-                Cliente, responsable, fecha, codigo y proyecto deben estar
-                completos.
-              </p>
-            </div>
-
-            <div className="rounded-md border border-border bg-surface p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-text-neutral">
-                Partidas
-              </p>
-              <p className="mt-2 text-sm leading-6 text-text-strong">
-                Revisa cantidades, unidades, familias y partidas duplicadas.
-              </p>
-            </div>
-
-            <div className="rounded-md border border-border bg-surface p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-text-neutral">
-                PDF
-              </p>
-              <p className="mt-2 text-sm leading-6 text-text-strong">
-                Comprueba notas, total final y maquetacion antes de compartir.
-              </p>
-            </div>
-          </div>
+          <p className="text-sm leading-6 text-text-neutral">
+            El modelo de autenticacion puede identificar sesiones de cliente,
+            pero la app actual esta centrada en usuarios internos.
+          </p>
         </SectionCard>
       </div>
     </main>

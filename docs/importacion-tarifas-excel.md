@@ -1,5 +1,10 @@
 # Importacion de tarifas desde Excel
 
+> Nota de estado: este documento describe el planteamiento legacy anterior al
+> Excel maestro definitivo. Para el flujo actual de la rama
+> `feature/price-update-workflow`, revisar `docs/excel-import.md` y
+> `docs/catalog-pricing.md`.
+
 ## Contexto
 
 La app Espres usa un catalogo de partidas para construir presupuestos. La idea es poder actualizar tarifas desde un archivo Excel mantenido fuera de la app, sin romper presupuestos existentes ni degradar la experiencia mobile del selector de partidas.

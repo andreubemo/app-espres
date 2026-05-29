@@ -2,8 +2,8 @@
 
 Fecha de revision: 2026-05-29  
 Rama actual: `feature/price-update-workflow`  
-Ultimo commit funcional revisado: `c13acaf feat: add price catalog management workflow`  
-Estado general: estable en pruebas locales, rama subida, no fusionada a `main` ni desplegada a produccion por falta de validacion segura de Vercel/preview y QA browser completa.
+Ultimo commit funcional revisado: `72dbe53 docs: add final handoff and qa review`
+Estado general: estable en pruebas locales previas, rama subida, no fusionada a `main` ni desplegada a produccion por falta de validacion segura de Vercel/preview y QA browser completa.
 
 ## Informacion general
 
@@ -12,6 +12,37 @@ Estado general: estable en pruebas locales, rama subida, no fusionada a `main` n
 - Nota critica: el proyecto no esta usando NextAuth v5 aunque varias tareas lo mencionan como requisito.
 - Rama remota disponible: `origin/feature/price-update-workflow`.
 - Pull request no creado desde CLI porque `gh` no esta instalado. GitHub devolvio enlace para abrir PR: `https://github.com/andreubemo/app-espres/pull/new/feature/price-update-workflow`.
+
+## Actualizacion posterior de documentacion y performance
+
+Se actualizo la documentacion del proyecto para reflejar el estado real de la rama:
+
+- `README.md`
+- `.env.example`
+- `docs/architecture.md`
+- `docs/budgets.md`
+- `docs/catalog-pricing.md`
+- `docs/excel-import.md`
+- `docs/roles-and-permissions.md`
+- `docs/tutorial.md`
+- `docs/performance.md`
+
+Tambien se actualizo la pagina `/tutorial` para explicar el uso por roles y se anadieron estados de carga:
+
+- `src/ui/common/RouteLoading.tsx`
+- `src/app/(dashboard)/loading.tsx`
+- `src/app/clients/loading.tsx`
+- `src/app/materials/loading.tsx`
+
+Nota critica mantenida: la documentacion no debe afirmar NextAuth v5 como implementado. El paquete real sigue siendo `next-auth@4.24.13`.
+
+Verificacion de esta actualizacion:
+
+- `corepack pnpm install --frozen-lockfile --config.confirmModulesPurge=false`: correcto tras parar el dev server que bloqueaba Prisma.
+- `corepack pnpm run prisma:generate`: correcto.
+- `corepack pnpm test`: correcto, 4 archivos y 12 tests.
+- `corepack pnpm lint`: correcto.
+- `corepack pnpm build`: correcto.
 
 ## Cambios implementados hoy
 

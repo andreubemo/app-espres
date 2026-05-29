@@ -1,583 +1,225 @@
-# Espres
+# Espres App
 
-## Espanol
+Espres App es una aplicacion interna para crear y gestionar presupuestos de carpinteria, stands y montaje. Trabaja con catalogo importado desde Excel, presupuestos versionados y control multiempresa por `companyId`.
 
-Espres es una aplicacion web interna para crear, editar, versionar y descargar presupuestos de stands, carpinteria y montaje. Esta pensada para trabajar rapido en oficina y en movil: el usuario define la base del presupuesto, selecciona partidas desde un catalogo, ajusta cantidades, guarda versiones y genera un PDF con una maquetacion cercana a la vista web.
+El modelo principal guarda cada presupuesto como `Budget` y cada version como snapshot JSON en `BudgetVersion.data`. Esto permite conservar precios, partidas, cantidades y totales historicos aunque el catalogo cambie despues.
 
-La aplicacion esta orientada a empresas: cada presupuesto pertenece a una empresa, esta vinculado siempre a un cliente y queda asociado automaticamente al usuario interno que lo crea. Esto permite a perfiles `OWNER` o `ADMIN` saber quien es responsable de cada presupuesto.
+## Estado Actual
 
-### Estado actual
+- Rama de trabajo actual: `feature/price-update-workflow`.
+- Rama de produccion: `main`.
+- Deploy previsto: Vercel, sin deploy automatico desde esta tarea.
+- Estado de la rama: funcional en local con tests, lint y build verdes.
+- Gestion de precios/Excel: implementada parcialmente. Ya existe pantalla owner, preview/importacion y modelos nuevos, pero falta validar preview Vercel y conectar toda la logica de formulas del Excel maestro al wizard de presupuestos.
+- Auth real del repo: `next-auth@4.24.13`. La migracion a NextAuth v5 esta pendiente; no esta implementada en esta rama.
 
-- Rama de trabajo principal para estos cambios: `feature/design-system`.
-- Rama de produccion prevista: `main`.
-- Deploy previsto: Vercel, con despliegue automatico cuando se actualice `main`.
-- Base de datos: PostgreSQL, compatible con Supabase si se proporciona `DATABASE_URL` y `DIRECT_URL`.
-- Autenticacion: NextAuth con credenciales y sesiones JWT.
-
-### Stack
+## Stack
 
 - Next.js 16 App Router.
 - React 19.
+- TypeScript.
 - Tailwind CSS 4.
 - Prisma 6.7.
-- PostgreSQL.
-- NextAuth 4.
+- PostgreSQL compatible con Supabase.
+- NextAuth/Auth.js: implementado con NextAuth v4; NextAuth v5 pendiente.
+- Vercel como objetivo de despliegue.
 - pnpm.
-- `pdfkit` para exportacion PDF.
-- `lucide-react` para iconos de interfaz.
-- `xlsx` para importaciones desde Excel.
+- Vitest para tests unitarios.
+- `xlsx` para lectura/importacion de Excel.
+- `pdfkit` para descarga PDF de presupuestos.
+- `lucide-react` para iconos.
 
-### Funcionalidades principales
+## Funcionalidades
 
-- Login con credenciales para usuarios internos y clientes.
-- Roles internos: `OWNER`, `ADMIN`, `WORKER`.
-- Gestion de usuarios internos desde ajustes.
+Implementado:
+
+- Login con credenciales.
+- Sesiones JWT con usuario interno o cliente.
+- Multiempresa mediante `companyId`.
+- Roles internos `OWNER`, `ADMIN`, `WORKER`.
+- Gestion de usuarios internos para `OWNER` y `ADMIN`.
 - Gestion de clientes.
 - Gestion de materiales.
-- Catalogo de partidas importable desde Excel.
-- Listado de presupuestos con busqueda, filtros y acciones rapidas.
-- Creacion guiada de presupuestos.
-- Seleccion de partidas por familias mediante modal tipo app mobile.
-- Edicion de presupuestos existentes.
-- Versionado automatico al guardar cambios reales.
-- Historial de versiones con vista historica en modo solo lectura.
-- Restauracion de versiones historicas como nueva version.
-- Duplicado de presupuestos.
-- Marcado de presupuesto como enviado.
-- Eliminacion real de presupuestos y sus versiones.
-- Compartir enlace del presupuesto.
-- Descarga de presupuesto en PDF.
-- Indicacion visual del presupuesto recien creado.
+- Gestion de presupuestos.
+- Nuevo presupuesto en flujo guiado.
+- Selector de partidas desde catalogo.
+- Guardado como borrador.
+- `Budget` + `BudgetVersion.data` como snapshot JSON.
+- Listado de presupuestos.
+- Detalle de presupuesto.
+- Edicion de presupuesto y versionado.
+- Historial de versiones.
+- Restaurar versiones antiguas creando una version nueva.
+- Duplicar presupuesto.
+- Marcar presupuesto como enviado.
+- Descargar PDF.
+- Boton `Descartar`.
+- Aviso de cambios sin guardar en `/budgets/new`.
+- Gestion de precios/catalogo accesible para `OWNER`.
+- Contadores superiores en Gestionar precios.
+- Importacion/validacion Excel con preview.
+- Tests unitarios para reglas de precio, importador Excel, catalog API y contadores.
 
-### Flujo de presupuestos
+Parcial / en revision:
 
-1. El usuario crea un nuevo presupuesto desde `/budgets/new`.
-2. Selecciona o crea un cliente.
-3. Define datos base:
-   - codigo,
-   - proyecto,
-   - fecha,
-   - dimensiones,
-   - complejidad.
-4. El sistema calcula superficie y perimetro.
-5. El usuario abre el selector de partidas.
-6. Selecciona partidas por familia, con cantidades editables.
-7. Revisa las lineas y el resumen economico.
-8. Guarda el borrador.
-9. El presupuesto aparece en `/budgets` con destello sutil en color corporativo.
+- Importacion definitiva del Excel maestro en produccion.
+- Uso completo de formulas Excel dentro del wizard de presupuestos.
+- QA browser completa de boton atras, recarga y navegacion rapida con cambios sin guardar.
+- Portal de cliente externo. El modelo auth reconoce `CLIENT`, pero no hay flujo completo.
+- Migracion a NextAuth v5.
 
-### Edicion y versionado
+## Instalacion Local
 
-Desde el menu de acciones de cada presupuesto, tambien llamado menu de acciones, overflow menu o kebab menu, la accion `Editar` abre `/budgets/[id]/edit`.
+Requisitos:
 
-En la pagina de edicion se puede:
+- Node.js compatible con Next.js 16.
+- pnpm mediante Corepack.
+- PostgreSQL/Supabase accesible.
 
-- cambiar datos base,
-- cambiar cliente,
-- cambiar dimensiones,
-- cambiar complejidad,
-- editar cantidades,
-- eliminar partidas,
-- abrir el selector para anadir mas partidas.
+Pasos:
 
-La version solo sube cuando se guardan cambios reales. Si no hay cambios en datos o partidas, no se crea una version nueva. Esto evita historiales inflados y mantiene trazabilidad limpia.
-
-### Selector de partidas
-
-El selector de partidas esta optimizado para movil:
-
-- header compacto con familia, progreso y subtotal,
-- lista de familias horizontal en mobile,
-- tarjetas densas y tactiles,
-- input de cantidad listo para escribir,
-- barra inferior con iconos para anterior, siguiente, anadir y aceptar,
-- soporte para ver partidas ya incluidas al reabrir la modal,
-- evita duplicar partidas ya existentes.
-
-En edicion, las partidas ya incluidas aparecen marcadas como `Ya incluida` y se pueden ajustar sus cantidades desde la propia modal.
-
-### PDF
-
-La descarga usa la ruta:
-
-```txt
-/api/budgets/[id]/download
+```bash
+pnpm install
+cp .env.example .env
+pnpm prisma:generate
+pnpm prisma migrate dev
+pnpm dev
 ```
 
-Genera un PDF en servidor con:
+En Windows, si Prisma no puede reemplazar `query_engine-windows.dll.node`, cierra el servidor `pnpm dev` y repite el comando.
 
-- cabecera de marca,
-- estado,
-- cliente,
-- responsable,
-- fecha,
-- version,
-- datos del presupuesto,
-- resumen economico,
-- tabla de partidas.
+## Variables de Entorno
 
-### Datos y modelo mental
+No se deben commitear secretos. Usa `.env` o `.env.local` en desarrollo y configura las mismas variables en Vercel.
 
-El presupuesto se guarda mediante snapshots JSON en `BudgetVersion`. Cada version conserva una fotografia completa de:
-
-- datos base,
-- cliente,
-- dimensiones,
-- complejidad,
-- partidas,
-- cantidades,
-- precios,
-- totales.
-
-Esto permite que los cambios futuros del catalogo no rompan presupuestos antiguos.
-
-### Rutas principales
-
-```txt
-/login
-/budgets
-/budgets/new
-/budgets/[id]
-/budgets/[id]/edit
-/clients
-/materials
-/settings/users
-/api/catalog
-/api/budgets/[id]/download
+```env
+DATABASE_URL=
+DIRECT_URL=
+AUTH_SECRET=
+NEXTAUTH_URL=
 ```
 
-### Estructura relevante
+`NEXTAUTH_URL` suele ser `http://localhost:3000` en local.
 
-```txt
-src/
-  app/
-    (dashboard)/
-      budgets/
-        page.tsx
-        new/page.tsx
-        [id]/page.tsx
-        [id]/edit/page.tsx
-    actions/
-      budgets.ts
-    api/
-      catalog/route.ts
-      budgets/[id]/download/route.ts
-  domain/
-    budgets/
-      budget.model.ts
-      budget.service.ts
-    rules/
-      pricing.rules.ts
-  lib/
-    auth.ts
-    access-control.ts
-    prisma.ts
-  server/
-    services/
-      client.service.ts
-      material.service.ts
-  ui/
-    budgets/
-    common/
-    layout/
-    primitives/
-prisma/
-  schema.prisma
-scripts/
-  seed-owner.ts
-  create-user.ts
-  import-catalog-from-excel.ts
-resources/
-  imports/
-```
+## Scripts Disponibles
 
-### Scripts
+Scripts reales de `package.json`:
 
 ```bash
 pnpm dev
-pnpm install
 pnpm build
+pnpm start
 pnpm lint
+pnpm test
+pnpm test:watch
 pnpm prisma:generate
 pnpm import:excel
+pnpm import:price-workbook
 ```
 
 Notas:
 
 - `pnpm build` ejecuta `prisma generate` antes del build.
-- En Windows puede ser necesario cerrar el dev server antes del build si Prisma no puede reemplazar `query_engine-windows.dll.node`.
-- `pnpm lint` ignora `src/generated/prisma/**` porque es codigo generado.
+- `pnpm import:excel` es el importador legacy.
+- `pnpm import:price-workbook` importa el Excel maestro nuevo.
+- Si `pnpm prisma generate` no resuelve el binario local en Windows, usa `pnpm prisma:generate`.
 
-### Variables de entorno
+## Flujo de Desarrollo
 
-No se deben commitear secretos. En local se usan variables en `.env.local` o `.env`. En Vercel deben configurarse en el proyecto.
+1. Trabajar en rama feature.
+2. No desarrollar directamente sobre `main`.
+3. Ejecutar tests:
 
-Variables esperadas:
-
-```env
-DATABASE_URL=
-DIRECT_URL=
-AUTH_SECRET=
-NEXTAUTH_URL=
+```bash
+pnpm test
 ```
 
-En desarrollo local, `NEXTAUTH_URL` debe apuntar normalmente a:
+4. Ejecutar lint:
+
+```bash
+pnpm lint
+```
+
+5. Ejecutar build:
+
+```bash
+pnpm build
+```
+
+6. Subir la rama.
+7. Abrir PR.
+8. Hacer merge solo si pasan tests, lint, build, QA funcional y validacion de entorno.
+
+## Estructura del Proyecto
 
 ```txt
-http://localhost:3000
+src/app
+  App Router, paginas, route handlers y server actions.
+
+src/app/actions
+  Acciones server-side de presupuestos.
+
+src/domain
+  Logica pura de negocio: reglas de precio, catalogo, importacion Excel.
+
+src/lib
+  Auth, Prisma, permisos, politicas de descuento y utilidades.
+
+src/server
+  Servicios server-side sencillos para clientes/materiales.
+
+src/ui
+  Componentes de interfaz reutilizables.
+
+prisma
+  Schema, migraciones y seed.
+
+scripts
+  Scripts de importacion y creacion de usuarios.
+
+docs
+  Documentacion tecnica, tutoriales y handoff.
 ```
 
-### Supabase
+## Documentacion
 
-Si PostgreSQL esta en Supabase:
+- `docs/architecture.md`
+- `docs/budgets.md`
+- `docs/catalog-pricing.md`
+- `docs/excel-import.md`
+- `docs/roles-and-permissions.md`
+- `docs/tutorial.md`
+- `docs/performance.md`
+- `docs/chatgpt-handoff-latest.md`
 
-- Copiar `DATABASE_URL` desde Supabase.
-- Copiar `DIRECT_URL` si Prisma lo requiere para conexion directa.
-- Verificar que las variables estan tambien en Vercel para produccion.
-- No pegar secretos en commits, issues o documentacion publica.
+## Estado Actual y Pendientes
 
-### Rendimiento
+Estado actual:
 
-Optimizaciones actuales:
+- La app compila y pasa tests locales.
+- La gestion de presupuestos funciona con snapshots JSON.
+- La gestion de precios existe para `OWNER`.
+- Los contadores de precios ya distinguen entre `CatalogItem` y `CatalogPriceItem`.
+- Hay proteccion contra cambios sin guardar en nuevo presupuesto.
+- Hay skeletons de carga para mejorar la percepcion en rutas de datos.
 
-- Server Components para paginas de datos principales.
-- Client Components solo donde hay interaccion real.
-- Selector de partidas cargado con `dynamic import` en nuevo presupuesto y edicion.
-- Queries Prisma con `select` para traer solo campos usados.
-- `/api/catalog` devuelve solo columnas necesarias para la modal.
-- Servicios de clientes y materiales evitan devolver campos innecesarios.
-- PDF generado bajo demanda en ruta API, separado del bundle de cliente.
-- Iconos de `lucide-react` importados por componente.
+Pendientes proximos:
 
-### Validacion antes de deploy
+- Validar preview Vercel y variables de entorno antes de produccion.
+- Ejecutar QA browser real de navegacion, modal de descarte y recarga.
+- Importar el Excel definitivo en un entorno controlado.
+- Conectar formulas del Excel maestro al calculo final del wizard.
+- Decidir si se mantiene compatibilidad larga entre `CatalogItem` y `CatalogPriceItem`.
+- Migrar a NextAuth v5 si sigue siendo requisito.
 
-Antes de mergear a `main`:
+## Validacion Recomendada Antes de PR/Merge
 
 ```bash
 pnpm install
-pnpm lint
-pnpm build
-```
-
-Checklist manual recomendado:
-
-- login,
-- listado de presupuestos,
-- crear presupuesto,
-- seleccionar cliente,
-- anadir partidas,
-- editar presupuesto,
-- anadir mas partidas desde edicion,
-- guardar cambios y verificar version nueva,
-- comprobar que no se crea version sin cambios,
-- descargar PDF,
-- borrar presupuesto de prueba si procede.
-
-### Git y despliegue
-
-Flujo recomendado:
-
-```bash
-git checkout feature/design-system
-pnpm lint
-pnpm build
-git push origin feature/design-system
-git checkout main
-git pull origin main
-git merge feature/design-system
-git push origin main
-```
-
-Al hacer push a `main`, Vercel deberia desplegar produccion automaticamente.
-
----
-
-## English
-
-Espres is an internal web application for creating, editing, versioning and downloading stand, carpentry and installation budgets. It is designed for fast office and mobile use: users define the budget base, select line items from a catalog, adjust quantities, save versions and generate a PDF with a layout close to the web view.
-
-The app is company-oriented: each budget belongs to a company, is always linked to a client and is automatically associated with the internal user who created it. This helps `OWNER` and `ADMIN` users know who is responsible for every budget.
-
-### Current Status
-
-- Main working branch for these changes: `feature/design-system`.
-- Production branch: `main`.
-- Expected deploy target: Vercel, with automatic deployment when `main` is updated.
-- Database: PostgreSQL, Supabase-compatible when `DATABASE_URL` and `DIRECT_URL` are provided.
-- Authentication: NextAuth credentials provider with JWT sessions.
-
-### Stack
-
-- Next.js 16 App Router.
-- React 19.
-- Tailwind CSS 4.
-- Prisma 6.7.
-- PostgreSQL.
-- NextAuth 4.
-- pnpm.
-- `pdfkit` for PDF export.
-- `lucide-react` for UI icons.
-- `xlsx` for Excel imports.
-
-### Main Features
-
-- Credentials login for internal users and clients.
-- Internal roles: `OWNER`, `ADMIN`, `WORKER`.
-- Internal user management.
-- Client management.
-- Material management.
-- Catalog import from Excel.
-- Budget list with search, filters and quick actions.
-- Guided budget creation.
-- Family-based item selection through a mobile-style modal.
-- Existing budget editing.
-- Automatic versioning only when real changes are saved.
-- Version history with historical read-only view.
-- Restore historical versions as a new version.
-- Duplicate budgets.
-- Mark budgets as sent.
-- Real budget deletion with associated versions.
-- Share budget links.
-- Download budgets as PDF.
-- Visual highlight for newly created budgets.
-
-### Budget Flow
-
-1. The user creates a new budget from `/budgets/new`.
-2. The user selects or creates a client.
-3. The user defines base data:
-   - code,
-   - project,
-   - date,
-   - dimensions,
-   - complexity.
-4. The system calculates surface and perimeter.
-5. The user opens the item selector.
-6. The user selects catalog items by family, with editable quantities.
-7. The user reviews lines and totals.
-8. The draft is saved.
-9. The new budget appears in `/budgets` with a subtle corporate orange flash.
-
-### Editing and Versioning
-
-From each budget action menu, also known as an overflow menu or kebab menu, `Edit` opens `/budgets/[id]/edit`.
-
-The edit page allows users to:
-
-- change base data,
-- change client,
-- change dimensions,
-- change complexity,
-- edit quantities,
-- remove lines,
-- reopen the selector to add more items.
-
-The version number only increases when real changes are saved. If there are no changes in budget info or lines, no new version is created. This keeps the version history clean and useful.
-
-### Item Selector
-
-The item selector is optimized for mobile:
-
-- compact header with family, progress and subtotal,
-- horizontal family list on mobile,
-- dense touch-friendly cards,
-- quantity input ready for typing,
-- bottom icon bar for previous, next, add and accept,
-- existing lines are visible when reopening the modal,
-- existing lines are not duplicated.
-
-In edit mode, already included lines are marked as `Ya incluida` and their quantities can be adjusted inside the modal.
-
-### PDF
-
-The download endpoint is:
-
-```txt
-/api/budgets/[id]/download
-```
-
-It generates a server-side PDF with:
-
-- brand header,
-- status,
-- client,
-- responsible user,
-- date,
-- version,
-- budget data,
-- economic summary,
-- item table.
-
-### Data Model
-
-Budgets are stored as full JSON snapshots in `BudgetVersion`. Each version stores:
-
-- base data,
-- client,
-- dimensions,
-- complexity,
-- lines,
-- quantities,
-- prices,
-- totals.
-
-This keeps old budgets stable even if the catalog changes later.
-
-### Main Routes
-
-```txt
-/login
-/budgets
-/budgets/new
-/budgets/[id]
-/budgets/[id]/edit
-/clients
-/materials
-/settings/users
-/api/catalog
-/api/budgets/[id]/download
-```
-
-### Relevant Structure
-
-```txt
-src/
-  app/
-    (dashboard)/
-      budgets/
-        page.tsx
-        new/page.tsx
-        [id]/page.tsx
-        [id]/edit/page.tsx
-    actions/
-      budgets.ts
-    api/
-      catalog/route.ts
-      budgets/[id]/download/route.ts
-  domain/
-    budgets/
-      budget.model.ts
-      budget.service.ts
-    rules/
-      pricing.rules.ts
-  lib/
-    auth.ts
-    access-control.ts
-    prisma.ts
-  server/
-    services/
-      client.service.ts
-      material.service.ts
-  ui/
-    budgets/
-    common/
-    layout/
-    primitives/
-prisma/
-  schema.prisma
-scripts/
-  seed-owner.ts
-  create-user.ts
-  import-catalog-from-excel.ts
-resources/
-  imports/
-```
-
-### Scripts
-
-```bash
-pnpm dev
-pnpm install
-pnpm build
-pnpm lint
 pnpm prisma:generate
-pnpm import:excel
-```
-
-Notes:
-
-- `pnpm build` runs `prisma generate` before the Next.js build.
-- On Windows, the dev server may need to be stopped before building if Prisma cannot replace `query_engine-windows.dll.node`.
-- `pnpm lint` ignores `src/generated/prisma/**` because it is generated code.
-
-### Environment Variables
-
-Secrets must never be committed. Local development uses `.env.local` or `.env`. Vercel variables must be configured in the project settings.
-
-Expected variables:
-
-```env
-DATABASE_URL=
-DIRECT_URL=
-AUTH_SECRET=
-NEXTAUTH_URL=
-```
-
-For local development, `NEXTAUTH_URL` usually should be:
-
-```txt
-http://localhost:3000
-```
-
-### Supabase
-
-If PostgreSQL is hosted on Supabase:
-
-- Copy `DATABASE_URL` from Supabase.
-- Copy `DIRECT_URL` if Prisma needs a direct connection.
-- Make sure the same variables exist in Vercel for production.
-- Never paste secrets in commits, issues or public documentation.
-
-### Performance
-
-Current optimizations:
-
-- Server Components for main data pages.
-- Client Components only where interaction is required.
-- The item selector is loaded with `dynamic import` in new budget and edit flows.
-- Prisma queries use `select` to fetch only the fields being rendered.
-- `/api/catalog` returns only the columns required by the selector modal.
-- Client and material services avoid returning unused fields.
-- PDF generation runs on demand in an API route, outside the client bundle.
-- `lucide-react` icons are imported per component.
-
-### Pre-Deploy Validation
-
-Before merging to `main`:
-
-```bash
-pnpm install
+pnpm test
 pnpm lint
 pnpm build
 ```
 
-Recommended manual checklist:
-
-- login,
-- budget list,
-- create budget,
-- select client,
-- add items,
-- edit budget,
-- add more items from edit mode,
-- save changes and verify the new version,
-- confirm no version is created without changes,
-- download PDF,
-- delete test budget if needed.
-
-### Git and Deployment
-
-Recommended flow:
-
-```bash
-git checkout feature/design-system
-pnpm lint
-pnpm build
-git push origin feature/design-system
-git checkout main
-git pull origin main
-git merge feature/design-system
-git push origin main
-```
-
-Pushing to `main` should trigger the production deployment on Vercel automatically.
+No hacer merge a `main` ni desplegar produccion si hay dudas sobre DB, variables de entorno, permisos multiempresa o perdida de datos.
