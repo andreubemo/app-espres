@@ -1,9 +1,9 @@
-import Link from "next/link";
-
 import AppHeaderNav from "./AppHeaderNav";
+import GuardedLink from "./GuardedLink";
 import UserMenu from "./UserMenu";
 
 type AppHeaderProps = {
+  canManagePrices?: boolean;
   canManageUsers?: boolean;
   userName: string;
   userEmail?: string | null;
@@ -26,6 +26,7 @@ function EspresWordmark() {
 }
 
 export default function AppHeader({
+  canManagePrices = false,
   canManageUsers = false,
   userName,
   userEmail,
@@ -33,7 +34,7 @@ export default function AppHeader({
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-card-background/95 shadow-sm backdrop-blur">
       <div className="mx-auto flex h-[61px] w-full max-w-7xl items-center gap-3 px-4 sm:px-5 lg:px-8">
-        <Link
+        <GuardedLink
           href="/budgets"
           className="inline-flex min-w-0 shrink-0 flex-col items-start justify-center gap-0.5 text-left"
         >
@@ -42,12 +43,13 @@ export default function AppHeader({
           <span className="hidden max-w-[260px] truncate text-xs leading-4 text-text-neutral sm:block">
             Gestión de presupuestos de carpintería
           </span>
-        </Link>
+        </GuardedLink>
 
         <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-3">
           <AppHeaderNav />
 
           <UserMenu
+            canManagePrices={canManagePrices}
             canManageUsers={canManageUsers}
             name={userName}
             email={userEmail}

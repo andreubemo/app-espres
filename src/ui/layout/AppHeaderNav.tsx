@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
+import GuardedLink from "./GuardedLink";
 
 const navItems = [
   {
@@ -64,7 +64,7 @@ export default function AppHeaderNav() {
         const isNewBudget = item.href === "/budgets/new";
 
         return (
-          <Link
+          <GuardedLink
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
@@ -87,7 +87,7 @@ export default function AppHeaderNav() {
             >
               {item.label}
             </span>
-          </Link>
+          </GuardedLink>
         );
       })}
     </nav>

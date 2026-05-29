@@ -1,16 +1,18 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { signOut } from "next-auth/react";
+import GuardedLink from "./GuardedLink";
 
 type UserMenuProps = {
+  canManagePrices?: boolean;
   canManageUsers?: boolean;
   name: string;
   email?: string | null;
 };
 
 export default function UserMenu({
+  canManagePrices = false,
   canManageUsers = false,
   name,
   email,
@@ -101,15 +103,26 @@ export default function UserMenu({
           </div>
 
           <div className="p-2">
+            {canManagePrices ? (
+              <GuardedLink
+                href="/settings/prices"
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-text-strong transition hover:bg-surface"
+              >
+                Gestionar precios
+              </GuardedLink>
+            ) : null}
+
             {canManageUsers ? (
-              <Link
+              <GuardedLink
                 href="/settings/users"
                 role="menuitem"
                 onClick={() => setOpen(false)}
                 className="flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium text-text-strong transition hover:bg-surface"
               >
                 Gestionar usuarios
-              </Link>
+              </GuardedLink>
             ) : null}
 
             <button

@@ -1,4 +1,5 @@
-import Link from "next/link";
+import DiscardBudgetButton from "./DiscardBudgetButton";
+import GuardedLink from "./GuardedLink";
 
 export default function AppFooter() {
   return (
@@ -9,12 +10,16 @@ export default function AppFooter() {
           <span className="font-medium text-text-strong">Andreu Amano</span>.
         </p>
 
-        <Link
-          href="/tutorial"
-          className="inline-flex h-9 w-fit items-center justify-center rounded-md border border-border bg-card-background px-3 text-sm font-medium text-text-strong shadow-sm transition hover:border-[#c9c2b8] hover:bg-surface"
-        >
-          Ver tutorial
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <DiscardBudgetButton />
+
+          <GuardedLink
+            href="/tutorial"
+            className="inline-flex h-9 w-fit items-center justify-center rounded-md border border-border bg-card-background px-3 text-sm font-medium text-text-strong shadow-sm transition hover:border-[#c9c2b8] hover:bg-surface"
+          >
+            Ver tutorial
+          </GuardedLink>
+        </div>
       </div>
     </footer>
   );

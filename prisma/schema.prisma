@@ -10,27 +10,31 @@ generator client {
 }
 
 model Company {
-  id           String        @id @default(cuid())
-  name         String
-  users        User[]
-  clients      Client[]
-  materials    Material[]
-  catalogItems CatalogItem[]
-  budgets      Budget[]
-  createdAt    DateTime      @default(now())
+  id                  String                    @id @default(cuid())
+  name                String
+  users               User[]
+  clients             Client[]
+  materials           Material[]
+  catalogItems        CatalogItem[]
+  catalogPriceItems   CatalogPriceItem[]
+  excelWorkbookCells  ExcelWorkbookCell[]
+  priceImportBatches  CatalogPriceImportBatch[]
+  budgets             Budget[]
+  createdAt           DateTime                  @default(now())
 }
 
 model User {
-  id             String   @id @default(cuid())
-  email          String   @unique
-  password       String
-  role           Role
-  active         Boolean  @default(true)
-  company        Company  @relation(fields: [companyId], references: [id])
-  companyId      String
-  budgetsCreated Budget[] @relation("CreatedBy")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                 String                    @id @default(cuid())
+  email              String                    @unique
+  password           String
+  role               Role
+  active             Boolean                   @default(true)
+  company            Company                   @relation(fields: [companyId], references: [id])
+  companyId          String
+  budgetsCreated     Budget[]                  @relation("CreatedBy")
+  priceImportBatches CatalogPriceImportBatch[]  @relation("PriceImportCreatedBy")
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
 
   @@index([companyId, role, active])
 }
@@ -91,6 +95,10 @@ model CatalogItem {
   priceLabel         String?
   unitPriceBase      Float
   unitPriceRaw       Float?
+  inputConfig        Json?
+  formulaConfig      Json?
+  componentConfig    Json?
+  defaultValues      Json?
   measureCurrent     Float?
   qtyCurrent         Float?
   realPriceCurrent   Float?
@@ -104,6 +112,69 @@ model CatalogItem {
   @@unique([companyId, itemKey])
   @@index([companyId, family])
   @@index([companyId, familyKey])
+  @@index([companyId, sourceSheet, sourceRow])
+}
+
+model CatalogPriceItem {
+  id             String   @id @default(cuid())
+  company        Company  @relation(fields: [companyId], references: [id])
+  companyId      String
+  sourceSheet    String?
+  sourceRow      Int?
+  itemKey        String
+  family         String
+  subfamily      String?
+  description    String
+  xMm            Float?
+  yMm            Float?
+  thicknessMm    Float?
+  unit           String
+  price          Float
+  provider       String?
+  extra1Label    String?
+  extra1Value    Float?
+  extra2Label    String?
+  extra2Value    Float?
+  extra3Label    String?
+  extra3Value    Float?
+  boardPrice     Float?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([companyId, itemKey])
+  @@index([companyId, family])
+  @@index([companyId, isActive])
+}
+
+model CatalogPriceImportBatch {
+  id          String   @id @default(cuid())
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String
+  createdBy   User     @relation("PriceImportCreatedBy", fields: [createdById], references: [id])
+  createdById String
+  fileName    String?
+  sourceType  String
+  summary     Json
+  createdAt   DateTime @default(now())
+
+  @@index([companyId, createdAt])
+}
+
+model ExcelWorkbookCell {
+  id          String   @id @default(cuid())
+  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String
+  sheetName   String
+  cellAddress String
+  valueNumber Float?
+  valueText   String?
+  formula     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([companyId, sheetName, cellAddress])
+  @@index([companyId, sheetName])
 }
 
 model Budget {

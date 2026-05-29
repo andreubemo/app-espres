@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -19,6 +19,7 @@ import {
 import type { BudgetDiscountPolicy } from "@/lib/budget-discounts";
 import BudgetBaseModal from "@/ui/budgets/BudgetBaseModal";
 import BudgetLinesPanel from "@/ui/budgets/BudgetLinesPanel";
+import { useRegisterUnsavedBudgetGuard } from "@/hooks/useUnsavedChangesGuard";
 
 const BudgetWizardFromCatalog = dynamic(
   () => import("@/ui/budgets/BudgetWizardFromCatalog"),
@@ -100,6 +101,8 @@ export default function NewBudgetClient({
   const [wizardOpen, setWizardOpen] = useState(true);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [baseFormDirty, setBaseFormDirty] = useState(false);
+  const [baseFormResetKey, setBaseFormResetKey] = useState(0);
   const [isCreatingClient, startCreateClientTransition] = useTransition();
 
   const currentStep = getCurrentStep(budget, wizardOpen);
@@ -107,6 +110,85 @@ export default function NewBudgetClient({
     () => Boolean(budget && budget.lines.length > 0 && !isSaving),
     [budget, isSaving]
   );
+
+  const hasUnsavedChanges = Boolean(budget || baseFormDirty);
+
+  const discardLocalDraft = useCallback(() => {
+    setBudget(null);
+    setWizardOpen(true);
+    setSaveMessage(null);
+    setBaseFormDirty(false);
+    setBaseFormResetKey((current) => current + 1);
+  }, []);
+
+  const persistDraft = useCallback(async () => {
+    if (!budget) {
+      return {
+        ok: false,
+        message: "No hay presupuesto preparado para guardar.",
+      };
+    }
+
+    if (budget.lines.length === 0) {
+      const message =
+        "Anade al menos una partida para poder guardar el presupuesto como borrador.";
+      setSaveMessage(message);
+      setWizardOpen(true);
+
+      return {
+        ok: false,
+        message,
+      };
+    }
+
+    setSaveMessage(null);
+    setIsSaving(true);
+
+    try {
+      const result = await saveBudgetDraft(budget);
+      setBudget(null);
+      setBaseFormDirty(false);
+
+      return {
+        ok: true,
+        budgetId: result.budgetId,
+      };
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "No se pudo guardar el borrador.";
+      setSaveMessage(message);
+
+      return {
+        ok: false,
+        message,
+      };
+    } finally {
+      setIsSaving(false);
+    }
+  }, [budget]);
+
+  const unsavedGuardConfig = useMemo(
+    () =>
+      hasUnsavedChanges
+        ? {
+            hasUnsavedChanges,
+            onDiscard: discardLocalDraft,
+            onSaveDraft: async () => {
+              const result = await persistDraft();
+
+              return {
+                ok: result.ok,
+                message: result.message,
+              };
+            },
+          }
+        : null,
+    [discardLocalDraft, hasUnsavedChanges, persistDraft]
+  );
+
+  useRegisterUnsavedBudgetGuard(unsavedGuardConfig);
 
   async function handleCreateClient(data: { name: string; email: string }) {
     return new Promise<string>((resolve, reject) => {
@@ -131,30 +213,11 @@ export default function NewBudgetClient({
   }
 
   async function handleSaveDraft() {
-    if (!budget) return;
+    const result = await persistDraft();
 
-    if (budget.lines.length === 0) {
-      setSaveMessage("Anade al menos una partida antes de guardar el borrador.");
-      setWizardOpen(true);
-      return;
-    }
-
-    setSaveMessage(null);
-    setIsSaving(true);
-
-    try {
-      const result = await saveBudgetDraft(budget);
-
+    if (result.ok && result.budgetId) {
       router.push(`/budgets?createdBudget=${result.budgetId}`);
       router.refresh();
-    } catch (error) {
-      setSaveMessage(
-        error instanceof Error
-          ? error.message
-          : "No se pudo guardar el borrador."
-      );
-    } finally {
-      setIsSaving(false);
     }
   }
 
@@ -365,8 +428,9 @@ export default function NewBudgetClient({
               clients={clients}
               discountPolicy={initialDiscountPolicy}
               isCreatingClient={isCreatingClient}
-              key={initialDiscountPolicy.role}
+              key={`${initialDiscountPolicy.role}-${baseFormResetKey}`}
               onCreateClient={handleCreateClient}
+              onDirtyChange={setBaseFormDirty}
               onSubmit={(data) => {
                 setBudget(
                   createEmptyBudget({
@@ -383,6 +447,7 @@ export default function NewBudgetClient({
                 );
                 setWizardOpen(true);
                 setSaveMessage(null);
+                setBaseFormDirty(false);
               }}
               open={!budget}
             />

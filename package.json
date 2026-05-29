@@ -9,8 +9,11 @@
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "start": "next start",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "eslint",
-    "import:excel": "node scripts/import-excel-to-json.js"
+    "import:excel": "node scripts/import-excel-to-json.js",
+    "import:price-workbook": "tsx scripts/import-price-workbook.ts"
   },
   "dependencies": {
     "@prisma/client": "6.7.0",
@@ -37,7 +40,8 @@
     "prisma": "^6.7.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.14"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

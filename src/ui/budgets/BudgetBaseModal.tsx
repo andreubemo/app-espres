@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Circle } from "lucide-react";
 import { BudgetComplexity } from "@/domain/budgets/budget.model";
 import type { BudgetDiscountPolicy } from "@/lib/budget-discounts";
@@ -34,6 +34,7 @@ type BudgetBaseModalProps = {
   clientError?: string | null;
   isCreatingClient?: boolean;
   onCreateClient: (data: { name: string; email: string }) => Promise<string>;
+  onDirtyChange?: (dirty: boolean) => void;
   onSubmit: (data: BudgetBaseFormData) => void;
 };
 
@@ -135,6 +136,7 @@ export default function BudgetBaseModal({
   clientError,
   isCreatingClient = false,
   onCreateClient,
+  onDirtyChange,
   onSubmit,
 }: BudgetBaseModalProps) {
   const [code, setCode] = useState(initialData?.code ?? "");
@@ -155,6 +157,11 @@ export default function BudgetBaseModal({
     getInitialDiscountPercent(initialData?.discountPercent, discountPolicy)
   );
   const [validationAttempted, setValidationAttempted] = useState(false);
+  const initialComplexity = initialData?.complexity ?? "medium";
+  const initialDiscountPercent = getInitialDiscountPercent(
+    initialData?.discountPercent,
+    discountPolicy
+  );
 
   const numericWidth = typeof width === "number" ? width : 0;
   const numericLength = typeof length === "number" ? length : 0;
@@ -214,6 +221,49 @@ export default function BudgetBaseModal({
   const missingFields = requiredFields.filter((field) => !field.complete);
 
   const isValid = missingFields.length === 0;
+  const isDirty = useMemo(() => {
+    const initialWidth = initialData?.width ?? "";
+    const initialLength = initialData?.length ?? "";
+
+    return (
+      code.trim() !== (initialData?.code ?? "") ||
+      project.trim() !== (initialData?.project ?? "") ||
+      clientId !== (initialData?.clientId ?? "") ||
+      date !== (initialData?.date ?? "") ||
+      notes.trim() !== (initialData?.notes ?? "") ||
+      width !== initialWidth ||
+      length !== initialLength ||
+      complexity !== initialComplexity ||
+      discountPercent !== initialDiscountPercent ||
+      newClientName.trim().length > 0 ||
+      newClientEmail.trim().length > 0
+    );
+  }, [
+    clientId,
+    code,
+    complexity,
+    date,
+    discountPercent,
+    initialComplexity,
+    initialData?.clientId,
+    initialData?.code,
+    initialData?.date,
+    initialData?.length,
+    initialData?.notes,
+    initialData?.project,
+    initialData?.width,
+    initialDiscountPercent,
+    length,
+    newClientEmail,
+    newClientName,
+    notes,
+    project,
+    width,
+  ]);
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
 
   function getMissingField(id: MissingFieldId) {
     return missingFields.find((field) => field.id === id);

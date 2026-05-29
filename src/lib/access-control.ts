@@ -28,6 +28,10 @@ export function canManageUsers(role: Role) {
   return role === Role.OWNER || role === Role.ADMIN;
 }
 
+export function canManagePrices(role: Role) {
+  return role === Role.OWNER;
+}
+
 export function canCreateUserRole(actorRole: Role, targetRole: Role) {
   if (actorRole === Role.OWNER) return true;
   return actorRole === Role.ADMIN && targetRole === Role.WORKER;
